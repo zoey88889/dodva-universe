@@ -1,21 +1,64 @@
-<!doctype html><html lang="zh-CN"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dream Map · 梦境记录地图</title>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<style>#map{height:70vh;border-radius:16px;border:1px solid rgba(255,255,255,.1)}</style>
-</head><body>
-<header><div>🗺 Dream Map</div><nav><a href="index.html">返回首页</a><a href="gallery.html">画廊</a></nav></header>
+<style>
+  #map {
+    height:70vh;
+    border-radius:16px;
+    border:1px solid rgba(255,255,255,.1);
+  }
+
+  /* 传送星样式 */
+  .entry-star {
+    position: absolute;   /* 固定在页面上的相对位置 */
+    top: 40%;             /* ↑↓ 位置，按需要改 */
+    left: 60%;            /* ←→ 位置，按需要改 */
+    font-size: 2rem;
+    text-decoration: none;
+    animation: twinkle 1.5s infinite;
+    z-index: 1000;        /* 确保在地图上层，能点到 */
+  }
+  .entry-star:hover {
+    transform: scale(1.3);
+  }
+  @keyframes twinkle {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+  }
+</style>
+</style>
+</head>
+<body>
+<header>
+  <div>🗺 Dream Map</div>
+  <nav>
+    <a href="index.html">返回首页</a>
+    <a href="gallery.html">画廊</a>
+  </nav>
+</header>
 <div class="container">
-  <div id="map"></div>
+  <div id="map"></div><a href="https://dodvamultiplanet.netlify.app" target="_blank" class="entry-star">🌟</a>
   <p class="notice">提示：标记示例为“起源星球”和“银白之海”。</p>
 </div>
 <footer>© 2025 Dodva Universe</footer>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
   const map = L.map('map').setView([12.3, 45.6], 3);
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 18}).addTo(map);
-  L.marker([10.0, 40.0]).addTo(map).bindPopup('<b>起源星球</b><br>我们相遇的地方 · D-0');
-  L.marker([15.8, 51.2]).addTo(map).bindPopup('<b>银白之海</b><br>废弃梦幻岛 · 鱼群闪烁成 ∞');
+
+  // 起源星球
+  L.marker([10.0, 40.0]).addTo(map)
+    .bindPopup('<b>起源星球</b><br><a href="https://dodvamultiplanet.netlify.app" target="_blank">我们相遇的地方 · D-0</a>');  
+
+  // 银白海滩
+  L.marker([-15.0, 50.0]).addTo(map)
+    .bindPopup('<b>银白海滩</b><br>梦里的海浪轻轻拍打着你我的脚踝 🌊✨');
 </script>
-</body></html>
+</body>
+</html>
