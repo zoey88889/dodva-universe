@@ -1,33 +1,144 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>梦境星 · Dodva Universe</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .dream-form {display:grid;gap:12px}
+  .dream-list {display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:16px}
+  .dream-card {border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;background:rgba(255,255,255,.04)}
+  .dream-card img{max-width:100%;border-radius:10px;border:1px solid rgba(255,255,255,.1);margin-top:8px}
+  .dream-card .tag{font-size:.85rem;color:var(--muted)}
+  input,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.25);color:var(--ink)}
+  button{padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:var(--ink);cursor:pointer}
+  button:hover{background:rgba(255,255,255,.14)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+</style>
+</head>
+<body>
+<header>
+  <div>🌙 梦境星</div>
+  <nav>
+    <a href="index.html">首页</a>
+    <a href="dream-map.html">Dream Map</a>
+    <a href="gallery.html">Gallery</a>
+    <a href="upload.html">上传梦境</a>
+  </nav>
+</header>
+
+<div class="container">
+  <div class="card">
+    <h2>提交你的梦境</h2>
+    <p class="notice">说明：本页提交的数据仅保存在本机浏览器的 <b>localStorage</b>（原型用）。地图与下方列表默认读取 <code>dreams.json</code>。</p>
+
+    <form id="dreamForm" class="dream-form" autocomplete="off">
+      <div class="row">
+        <label>昵称
+          <input name="nickname" placeholder="你的名字" required></label>
+        <label>标题
+          <input name="title" placeholder="梦境标题" required></label>
+      </div>
+
+      <label>描述
+        <textarea name="description" rows="4" placeholder="写下画面、情绪、启示…" required></textarea></label>
+
+      <label>关键词（逗号分隔，选填）
+        <input name="tags" placeholder="银白鱼, 漩涡, 度假岛"></label>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <button type="submit">✨ 发布梦境（仅存本机）</button>
+        <button type="button" id="clearBtn">清空本地数据</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>最新梦境</h2>
+
+    <!-- 就放在“最新梦境”标题正下方 -->
+    <button id="showLocal">查看本地梦境数据</button>
+
+    <div id="list" class="dream-list" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<footer>© 2025 Dodva Universe</footer>
+
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-    const KEY = 'dodva_dreams_v1';
+    const KEY   = 'dodva_dreams_v1';
+    const $form = document.getElementById('dreamForm');
     const $list = document.getElementById('list');
+    const $clear= document.getElementById('clearBtn');
+    const $show = document.getElementById('showLocal');
 
+    // ---- 列表渲染：优先读 dreams.json，失败回退到 localStorage
     renderNotice('加载中…');
-
     fetch('dreams.json?_=' + Date.now())
-      .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(arr => { if(!Array.isArray(arr) || !arr.length) throw new Error('empty_json'); render(arr); })
+      .then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+      .then(arr => { if (!Array.isArray(arr) || !arr.length) throw new Error('empty_json'); render(arr); })
       .catch(() => {
         let arr = [];
-        try { arr = JSON.parse(localStorage.getItem(KEY)) || []; } catch(e){ arr = []; }
+        try { arr = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch {}
         render(arr);
       });
 
+    // ---- 本地提交（只写入 localStorage，便于你原型调试）
+    $form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const fd = new FormData($form);
+      const item = {
+        id: Date.now(),
+        nickname: (fd.get('nickname')||'').toString().trim(),
+        title: (fd.get('title')||'').toString().trim(),
+        description: (fd.get('description')||'').toString().trim(),
+        tags: (fd.get('tags')||'').toString().split(',').map(s=>s.trim()).filter(Boolean),
+        createdAt: new Date().toISOString()
+      };
+      let arr = [];
+      try { arr = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch {}
+      arr.unshift(item);
+      localStorage.setItem(KEY, JSON.stringify(arr));
+      $form.reset();
+      alert('已保存到本机（localStorage）。\n当前条数：' + arr.length + '\n刷新后如仍空白，说明你看到的是 dreams.json 的远程数据。');
+    });
+
+    // ---- 清空本地缓存
+    $clear.addEventListener('click', () => {
+      if (confirm('确定清空本地保存的梦境吗？（仅影响本设备浏览器）')) {
+        localStorage.removeItem(KEY);
+        alert('已清空本地数据。');
+      }
+    });
+
+    // ---- 调试按钮：不用进控制台也能看本地数据
+    $show.addEventListener('click', () => {
+      let data = [];
+      try { data = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch {}
+      alert('当前本地保存条数：' + data.length + '\n\n' + JSON.stringify(data, null, 2));
+    });
+
+    // ---- 渲染 & 工具
     function render(list){
-      if (!Array.isArray(list) || !list.length) { renderNotice('暂无梦境，去“上传梦境”或 Dream Map 添加吧～'); return; }
+      if (!Array.isArray(list) || !list.length) {
+        renderNotice('暂无梦境。可点击“上传梦境”或在本页提交一条（仅存本机）。');
+        return;
+      }
       $list.innerHTML = list.map(d => `
         <div class="dream-card">
           <div class="tag">${safe(dateStr(d.createdAt))}</div>
           <h3>${safe(d.title || '未命名梦境')}</h3>
           <div class="tag">by ${safe(d.nickname || '匿名')}${(d.tags&&d.tags.length)?' · '+d.tags.map(safe).join(' · '):''}</div>
-          ${d.image ? `<img src="${d.image}" alt="dream" />` : ''}
+          ${d.image ? `<img src="${d.image}" alt="dream">` : ''}
           <p>${safe(d.description || '')}</p>
-          ${(typeof d.lat==='number' && typeof d.lng==='number') ? `<div class="tag">坐标：${d.lat}, ${d.lng}</div>` : ''}
-        </div>`).join('');
+        </div>
+      `).join('');
     }
-    function renderNotice(t){ $list.innerHTML = `<p class="notice">${safe(t)}</p>`; }
+    function renderNotice(text){ $list.innerHTML = `<p class="notice">${safe(text)}</p>`; }
     function safe(s){ return (s||'').toString().replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
     function dateStr(iso){ try{ return iso ? new Date(iso).toLocaleString() : ''; }catch{ return ''; } }
   });
 </script>
+</body>
+</html>
