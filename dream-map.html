@@ -4,40 +4,55 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dream Map · 梦境记录地图</title>
-
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
 <style>
-  #map { height: 70vh; border-radius:16px; border:1px solid rgba(255,255,255,.1); }
+  #map {
+    height: 70vh;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,.1);
+  }
   /* 粉金发光传送星 */
   .entry-star {
-    position: absolute; top: 40%; left: 60%;
-    font-size: 2.5rem; text-decoration:none; z-index:10; user-select:none;
-    background: linear-gradient(45deg,#ff69b4,#ffd700,#ffb6c1);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    position: absolute;
+    top: 40%;              /* 位置随心调 */
+    left: 60%;
+    font-size: 2.5rem;
+    text-decoration: none;
+    z-index: 10;           /* 在地图之上 */
+    user-select: none;
+
+    /* 渐变文字 + 发光 */
+    background: linear-gradient(45deg, #ff69b4, #ffd700, #ffb6c1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     animation: twinkle 1.5s infinite, glowPulse 3s infinite;
   }
   .entry-star:hover { transform: scale(1.4) rotate(10deg); }
   @keyframes twinkle { 0%{opacity:1} 50%{opacity:.5} 100%{opacity:1} }
   @keyframes glowPulse {
-    0%{text-shadow:0 0 8px rgba(255,105,180,.8),0 0 15px rgba(255,215,0,.6)}
-    50%{text-shadow:0 0 15px rgba(255,182,193,.9),0 0 25px rgba(255,215,0,.8)}
-    100%{text-shadow:0 0 8px rgba(255,105,180,.8),0 0 15px rgba(255,215,0,.6)}
+    0%   { text-shadow: 0 0 8px rgba(255,105,180,.8), 0 0 15px rgba(255,215,0,.6); }
+    50%  { text-shadow: 0 0 15px rgba(255,182,193,.9), 0 0 25px rgba(255,215,0,.8); }
+    100% { text-shadow: 0 0 8px rgba(255,105,180,.8), 0 0 15px rgba(255,215,0,.6); }
   }
 </style>
 </head>
 <body>
 <header>
   <div>🗺 Dream Map</div>
-  <nav><a href="index.html">返回首页</a><a href="gallery.html">画廊</a></nav>
+  <nav>
+    <a href="index.html">返回首页</a>
+    <a href="gallery.html">画廊</a>
+  </nav>
 </header>
 
 <div class="container" style="position:relative;">
   <div id="map"></div>
-  <!-- 入口星（直达旧站） -->
+
+  <!-- ✅ 唯一的一颗入口星（点击直达旧站） -->
   <a href="https://dodvamultiplanet.netlify.app" target="_blank" rel="noopener" class="entry-star">🌟</a>
-  <p class="notice">提示：点击“起源星球”弹窗里的链接可直达旧站；🌟为悬浮传送星。</p>
+
+  <p class="notice">提示：标记示例为“起源星球”和“银白之海”。</p>
 </div>
 
 <footer>© 2025 Dodva Universe</footer>
@@ -53,7 +68,7 @@
 
   // 银白海滩（预告）
   L.marker([-15.0, 50.0]).addTo(map)
-    .bindPopup('<b>银白海滩</b><br>梦里的海浪轻轻拍打着你我的脚踝 🌊✨');
+    .bindPopup('<b>银白海滩</b><br>梦里的海浪轻轻拍打着你我的脚踝 🌊✨（建设中）');
 </script>
 </body>
 </html>
