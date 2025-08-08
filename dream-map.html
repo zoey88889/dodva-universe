@@ -42,7 +42,7 @@
 
 <footer>© 2025 Dodva Universe</footer>
 
-<!-- Leaflet 脚本（注意：只有这两段，没有多余 <script>） -->
+<!-- Leaflet -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
   const map = L.map('map').setView([12.3, 45.6], 3);
@@ -53,4 +53,8 @@
     .bindPopup('<b>起源星球</b><br><a href="https://dodvamultiplanet.netlify.app" target="_blank" rel="noopener">我们相遇的地方 · D-0</a>');
 
   // 银白海滩（预告）
-  L.marker([-15
+  L.marker([-15.0, 50.0]).addTo(map)
+    .bindPopup('<b>银白海滩</b><br>梦里的海浪轻轻拍打着你我的脚踝 🌊✨（建设中）');
+</script>
+</body>
+</html>
