@@ -1,21 +1,144 @@
-<!doctype html><html lang="zh-CN"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dream Map · 梦境记录地图</title>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>梦境星 · Dodva Universe</title>
 <link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<style>#map{height:70vh;border-radius:16px;border:1px solid rgba(255,255,255,.1)}</style>
-</head><body>
-<header><div>🗺 Dream Map</div><nav><a href="index.html">返回首页</a><a href="gallery.html">画廊</a></nav></header>
+<style>
+  .dream-form {display:grid;gap:12px}
+  .dream-list {display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:16px}
+  .dream-card {border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;background:rgba(255,255,255,.04)}
+  .dream-card img{max-width:100%;border-radius:10px;border:1px solid rgba(255,255,255,.1);margin-top:8px}
+  .tag{font-size:.85rem;color:var(--muted)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  input,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.25);color:var(--ink)}
+  button{padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:var(--ink);cursor:pointer}
+  button:hover{background:rgba(255,255,255,.14)}
+</style>
+</head>
+<body>
+<header>
+  <div>🌙 梦境星</div>
+  <nav>
+    <a href="index.html">首页</a>
+    <a href="dream-map.html">Dream Map</a>
+    <a href="gallery.html">Gallery</a>
+    <a href="upload.html">上传梦境</a>
+  </nav>
+</header>
+
 <div class="container">
-  <div id="map"></div>
-  <p class="notice">提示：标记示例为“起源星球”和“银白之海”。</p>
+  <div class="card">
+    <h2>提交你的梦境</h2>
+    <p class="notice">本页为本地原型：数据保存在浏览器 <b>localStorage</b>。换设备/清缓存会丢失；稍后可接 Netlify Forms / Supabase。</p>
+
+    <form id="dreamForm" class="dream-form">
+      <div class="row">
+        <div><label>昵称
+          <input name="nickname" placeholder="你的名字" required></label></div>
+        <div><label>标题
+          <input name="title" placeholder="梦境标题" required></label></div>
+      </div>
+
+      <label>描述
+        <textarea name="description" rows="4" placeholder="写下画面、情绪、启示…" required></textarea></label>
+
+      <div class="row">
+        <div><label>纬度（选填）
+          <input name="lat" type="number" step="any" placeholder="12.34"></label></div>
+        <div><label>经度（选填）
+          <input name="lng" type="number" step="any" placeholder="56.78"></label></div>
+      </div>
+
+      <label>关键词（逗号分隔，选填）
+        <input name="tags" placeholder="银白鱼, 漩涡, 度假岛"></label>
+
+      <label>图片（选填）
+        <input id="imageInput" type="file" accept="image/*"></label>
+
+      <button type="submit">✨ 发布梦境</button>
+      <button type="button" id="clearBtn" title="仅清除本地缓存">清空本地数据</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>最新梦境</h2>
+    <div id="list" class="dream-list"></div>
+  </div>
 </div>
+
 <footer>© 2025 Dodva Universe</footer>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <script>
-  const map = L.map('map').setView([12.3, 45.6], 3);
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 18}).addTo(map);
-  L.marker([10.0, 40.0]).addTo(map).bindPopup('<b>起源星球</b><br>我们相遇的地方 · D-0');
-  L.marker([15.8, 51.2]).addTo(map).bindPopup('<b>银白之海</b><br>废弃梦幻岛 · 鱼群闪烁成 ∞');
+  const KEY = 'dodva_dreams_v1';
+  const $form = document.getElementById('dreamForm');
+  const $list = document.getElementById('list');
+  const $clear = document.getElementById('clearBtn');
+  const $img = document.getElementById('imageInput');
+
+  // 载入
+  let dreams = [];
+  try { dreams = JSON.parse(localStorage.getItem(KEY)) || []; } catch(e){ dreams = []; }
+  render();
+
+  // 提交
+  $form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const fd = new FormData($form);
+    const d = {
+      id: Date.now(),
+      nickname: (fd.get('nickname')||'').trim(),
+      title: (fd.get('title')||'').trim(),
+      description: (fd.get('description')||'').trim(),
+      tags: (fd.get('tags')||'').split(',').map(s=>s.trim()).filter(Boolean),
+      lat: parseFloat(fd.get('lat')), lng: parseFloat(fd.get('lng')),
+      image: null,
+      createdAt: new Date().toISOString()
+    };
+
+    // 读取图片为 dataURL（本地原型存储）
+    if ($img.files && $img.files[0]) {
+      d.image = await fileToDataURL($img.files[0]);
+    }
+
+    dreams.unshift(d);
+    localStorage.setItem(KEY, JSON.stringify(dreams));
+    $form.reset(); $img.value = '';
+    render();
+  });
+
+  // 清空本地缓存
+  $clear.addEventListener('click', ()=>{
+    if (confirm('确定清空本地保存的梦境吗？（仅影响本设备浏览器）')) {
+      localStorage.removeItem(KEY);
+      dreams = [];
+      render();
+    }
+  });
+
+  function render(){
+    if (!dreams.length) { $list.innerHTML = '<p class="notice">暂无梦境，快来发布你的第一条吧～</p>'; return; }
+    $list.innerHTML = dreams.map(d => `
+      <div class="dream-card">
+        <div class="tag">${new Date(d.createdAt).toLocaleString()}</div>
+        <h3>${escapeHTML(d.title||'未命名梦境')}</h3>
+        <div class="tag">by ${escapeHTML(d.nickname||'匿名')} · ${(d.tags||[]).join(' · ')}</div>
+        ${d.image ? `<img src="${d.image}" alt="">` : ''}
+        <p>${escapeHTML(d.description||'')}</p>
+        ${isFinite(d.lat) && isFinite(d.lng) ? `<div class="tag">坐标：${d.lat}, ${d.lng}</div>` : ''}
+      </div>
+    `).join('');
+  }
+
+  function fileToDataURL(file){
+    return new Promise((resolve,reject)=>{
+      const r = new FileReader();
+      r.onload = ()=>resolve(r.result);
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+  function escapeHTML(s){ return (s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
 </script>
-</body></html>
+</body>
+</html>
