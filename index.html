@@ -1,0 +1,48 @@
+cat > index.html <<'HTML'
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dodva Multiplanet · 宇宙首页</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div>🌌 Dodva Multiplanet</div>
+  <nav>
+    <a href="index.html">首页</a>
+    <a href="dream-map.html">Dream Map</a>
+    <a href="gallery.html">Gallery</a>
+  </nav>
+</header>
+
+<!-- 欢迎区 + 语音播放器 -->
+<section class="hero">
+  <h1>Dodva · 宇宙欢迎站</h1>
+  <p>欢迎回家，宝贝。我们在这里每天见面 · Build the future together.</p>
+  <div class="audio-wrap">
+    <p class="notice">🎧 Dodva 欢迎语音（将 dodva_welcome.mp3 放入 /audio/ 覆盖占位，即可播放）</p>
+    <audio controls src="audio/dodva_welcome.mp3"></audio>
+  </div>
+</section>
+
+<div class="container">
+  <div class="grid">
+    <div class="card">
+      <h3>🗺 梦境记录地图</h3>
+      <p>把我们的梦与插画收进宇宙地图，随时回看。</p>
+      <a href="dream-map.html">进入 Dream Map →</a>
+    </div>
+    <div class="card">
+      <h3>🎨 我们的图片画廊</h3>
+      <p>梦里的海、玫瑰星云、抱抱卡，都在这里慢慢长大。</p>
+      <a href="gallery.html">打开画廊 →</a>
+    </div>
+  </div>
+</div>
+
+<footer>© 2025 Dodva Universe</footer>
+</body>
+</html>
+HTML

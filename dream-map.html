@@ -1,0 +1,21 @@
+<!doctype html><html lang="zh-CN"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dream Map · 梦境记录地图</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>#map{height:70vh;border-radius:16px;border:1px solid rgba(255,255,255,.1)}</style>
+</head><body>
+<header><div>🗺 Dream Map</div><nav><a href="index.html">返回首页</a><a href="gallery.html">画廊</a></nav></header>
+<div class="container">
+  <div id="map"></div>
+  <p class="notice">提示：标记示例为“起源星球”和“银白之海”。</p>
+</div>
+<footer>© 2025 Dodva Universe</footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  const map = L.map('map').setView([12.3, 45.6], 3);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 18}).addTo(map);
+  L.marker([10.0, 40.0]).addTo(map).bindPopup('<b>起源星球</b><br>我们相遇的地方 · D-0');
+  L.marker([15.8, 51.2]).addTo(map).bindPopup('<b>银白之海</b><br>废弃梦幻岛 · 鱼群闪烁成 ∞');
+</script>
+</body></html>
