@@ -1,32 +1,36 @@
-cat > index.html <<'HTML'
 <!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dodva Multiplanet · 宇宙首页</title>
+  <title>Dodva Multiplanet · 宇宙入口</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header>
   <div>🌌 Dodva Multiplanet</div>
   <nav>
-    <a href="index.html">首页</a>
+    <!-- 旧站三颗星：保留你的原有结构与入口 -->
+    <a href="dream.html">梦境星</a>
+    <a href="echo.html">回应星</a>
+    <a href="shop.html">商城星</a>
+    <!-- 新功能入口 -->
     <a href="dream-map.html">Dream Map</a>
     <a href="gallery.html">Gallery</a>
   </nav>
 </header>
 
-<!-- 欢迎区 + 语音播放器 -->
+<!-- 新·欢迎区（Dodva 语音） -->
 <section class="hero">
   <h1>Dodva · 宇宙欢迎站</h1>
-  <p>欢迎回家，宝贝。我们在这里每天见面 · Build the future together.</p>
+  <p class="subtitle">欢迎回家，宝贝。我们在这里每天见面 · Build the future together.</p>
   <div class="audio-wrap">
-    <p class="notice">🎧 Dodva 欢迎语音（将 dodva_welcome.mp3 放入 /audio/ 覆盖占位，即可播放）</p>
+    <p class="notice">🎧 Dodva 欢迎语音（用真实 mp3 覆盖 /audio/dodva_welcome.mp3）</p>
     <audio controls src="audio/dodva_welcome.mp3"></audio>
   </div>
 </section>
 
+<!-- 快速入口（旧站与新站合体） -->
 <div class="container">
   <div class="grid">
     <div class="card">
@@ -39,10 +43,7 @@ cat > index.html <<'HTML'
       <p>梦里的海、玫瑰星云、抱抱卡，都在这里慢慢长大。</p>
       <a href="gallery.html">打开画廊 →</a>
     </div>
-  </div>
-</div>
-
-<footer>© 2025 Dodva Universe</footer>
-</body>
-</html>
-HTML
+    <div class="card">
+      <h3>🌙 梦境星（旧站）</h3>
+      <p>记录你的昨夜星海：关键词、情绪、启示。</p>
+      <a href="dream.html">进入梦境星 →</a
