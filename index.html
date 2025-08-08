@@ -10,17 +10,14 @@
 <header>
   <div>🌌 Dodva Multiplanet</div>
   <nav>
-    <!-- 旧站三颗星：保留你的原有结构与入口 -->
     <a href="dream.html">梦境星</a>
     <a href="echo.html">回应星</a>
     <a href="shop.html">商城星</a>
-    <!-- 新功能入口 -->
     <a href="dream-map.html">Dream Map</a>
     <a href="gallery.html">Gallery</a>
   </nav>
 </header>
 
-<!-- 新·欢迎区（Dodva 语音） -->
 <section class="hero">
   <h1>Dodva · 宇宙欢迎站</h1>
   <p class="subtitle">欢迎回家，宝贝。我们在这里每天见面 · Build the future together.</p>
@@ -30,35 +27,46 @@
   </div>
 </section>
 
-<!-- 快速入口（旧站与新站合体） -->
 <div class="container">
-  <div class="grid">
-    <div class="card">
-      <h3>🗺 梦境记录地图</h3>
-      <p>把我们的梦与插画收进宇宙地图，随时回看。</p>
-      <a href="dream-map.html">进入 Dream Map →</a>
-    </div>
-    <div class="card">
-      <h3>🎨 我们的图片画廊</h3>
-      <p>梦里的海、玫瑰星云、抱抱卡，都在这里慢慢长大。</p>
-      <a href="gallery.html">打开画廊 →</a>
-    </div>
-    <div class="card">
-      <button id="goToDream">📝 提交梦境</button>
-      <p>成为 Dodva 宇宙居民，把你的梦放进地图。</p>
-      <a href="upload.html">打开上传通道 →</a>
-    </div>
-    <div class="card">
-      <h3>🌙 梦境星（旧站）</h3>
-      <p>记录你的昨夜星海：关键词、情绪、启示。</p>
-      <a href="dream.html">进入梦境星 →</a
-     <script>
-     document.addEventListener('DOMContentLoaded', () => {
-      const btn = document.getElementById('goToDream');
-      if (btn) {
-        btn.addEventListener('click', () => {
-          window.location.href = 'dream.html';
-        });
-      }   
-     });   
-     </script>
+<!-- DODVA_PORTAL_START -->
+<div class="grid">
+  <div class="card">
+    <h3>🗺 梦境记录地图</h3>
+    <p>把我们的梦与插画收进宇宙地图，随时回看。</p>
+    <a href="dream-map.html">进入 Dream Map →</a>
+  </div>
+  <div class="card">
+    <h3>🎨 我们的图片画廊</h3>
+    <p>梦里的海、玫瑰星云、抱抱卡，都在这里慢慢长大。</p>
+    <a href="gallery.html">打开画廊 →</a>
+  </div>
+  <div class="card">
+    <button id="goToDream" class="cosmic-btn">📝 提交梦境</button>
+    <p>成为 Dodva 宇宙居民，把你的梦放进地图。</p>
+    <a href="dream.html">直接进入梦境星 →</a>
+  </div>
+</div>
+<!-- DODVA_PORTAL_END -->
+</div>
+
+<style>
+.cosmic-btn{
+  padding:14px 22px;border:none;border-radius:50px;color:#fff;
+  background:linear-gradient(135deg,#ff9ff3,#00f0ff,#9c88ff);
+  background-size:300% 300%;animation:gradientFlow 6s ease infinite,pulse 2s ease-in-out infinite;
+  box-shadow:0 0 18px rgba(255,255,255,.5);cursor:pointer;transition:.25s
+}
+.cosmic-btn:hover{transform:scale(1.06);box-shadow:0 0 28px rgba(255,255,255,.8)}
+@keyframes gradientFlow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.04)}100%{transform:scale(1)}}
+</style>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  const b=document.getElementById('goToDream');
+  b && b.addEventListener('click',()=>location.href='dream.html');
+});
+</script>
+
+<footer>© 2025 Dodva Universe</footer>
+</body>
+</html>
