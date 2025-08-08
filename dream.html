@@ -1,108 +1,33 @@
 <script>
-  // === 更稳的本地原型存储（含日志） ===
-  const KEY = 'dodva_dreams_v1';
-  const $form = document.getElementById('dreamForm');
-  const $list = document.getElementById('list');
-  const $clear = document.getElementById('clearBtn');
-  const $img = document.getElementById('imageInput');
+  document.addEventListener('DOMContentLoaded', () => {
+    const KEY = 'dodva_dreams_v1';
+    const $list = document.getElementById('list');
 
-  // 读本地
-  let dreams = [];
-  try {
-    const raw = localStorage.getItem(KEY);
-    dreams = raw ? JSON.parse(raw) : [];
-    if (!Array.isArray(dreams)) dreams = [];
-  } catch (e) {
-    console.error('JSON parse failed:', e);
-    dreams = [];
-  }
-  render();
+    renderNotice('加载中…');
 
-  // 提交
-  $form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    try {
-      const fd = new FormData($form);
+    fetch('dreams.json?_=' + Date.now())
+      .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(arr => { if(!Array.isArray(arr) || !arr.length) throw new Error('empty_json'); render(arr); })
+      .catch(() => {
+        let arr = [];
+        try { arr = JSON.parse(localStorage.getItem(KEY)) || []; } catch(e){ arr = []; }
+        render(arr);
+      });
 
-      // 安全取值
-      const nickname   = (fd.get('nickname') || '').toString().trim();
-      const title      = (fd.get('title') || '').toString().trim();
-      const description= (fd.get('description') || '').toString().trim();
-      const tagsStr    = (fd.get('tags') || '').toString();
-      const latStr     = (fd.get('lat') || '').toString().trim();
-      const lngStr     = (fd.get('lng') || '').toString().trim();
-
-      // 更稳的数值转换
-      const lat = latStr === '' ? null : Number(latStr);
-      const lng = lngStr === '' ? null : Number(lngStr);
-
-      let image = null;
-      if ($img && $img.files && $img.files[0]) {
-        image = await fileToDataURL($img.files[0]); // 转成 dataURL
-      }
-
-      const item = {
-        id: Date.now(),
-        nickname, title, description,
-        tags: tagsStr.split(',').map(s => s.trim()).filter(Boolean),
-        lat: (lat !== null && !Number.isNaN(lat)) ? lat : null,
-        lng: (lng !== null && !Number.isNaN(lng)) ? lng : null,
-        image,
-        createdAt: new Date().toISOString()
-      };
-
-      dreams.unshift(item);
-      localStorage.setItem(KEY, JSON.stringify(dreams));
-      $form.reset();
-      if ($img) $img.value = '';
-      render();
-      console.log('Dream saved:', item);
-    } catch (err) {
-      console.error('Submit failed:', err);
-      alert('提交失败了，我来查一下控制台错误～');
+    function render(list){
+      if (!Array.isArray(list) || !list.length) { renderNotice('暂无梦境，去“上传梦境”或 Dream Map 添加吧～'); return; }
+      $list.innerHTML = list.map(d => `
+        <div class="dream-card">
+          <div class="tag">${safe(dateStr(d.createdAt))}</div>
+          <h3>${safe(d.title || '未命名梦境')}</h3>
+          <div class="tag">by ${safe(d.nickname || '匿名')}${(d.tags&&d.tags.length)?' · '+d.tags.map(safe).join(' · '):''}</div>
+          ${d.image ? `<img src="${d.image}" alt="dream" />` : ''}
+          <p>${safe(d.description || '')}</p>
+          ${(typeof d.lat==='number' && typeof d.lng==='number') ? `<div class="tag">坐标：${d.lat}, ${d.lng}</div>` : ''}
+        </div>`).join('');
     }
+    function renderNotice(t){ $list.innerHTML = `<p class="notice">${safe(t)}</p>`; }
+    function safe(s){ return (s||'').toString().replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+    function dateStr(iso){ try{ return iso ? new Date(iso).toLocaleString() : ''; }catch{ return ''; } }
   });
-
-  // 清空
-  $clear.addEventListener('click', () => {
-    if (confirm('确定清空本地保存的梦境吗？（仅影响本设备浏览器）')) {
-      localStorage.removeItem(KEY);
-      dreams = [];
-      render();
-    }
-  });
-
-  function render() {
-    if (!dreams.length) {
-      $list.innerHTML = '<p class="notice">暂无梦境，发布你的第一条吧～</p>';
-      return;
-    }
-    $list.innerHTML = dreams.map(d => `
-      <div class="dream-card">
-        <div class="tag">${safe(dateStr(d.createdAt))}</div>
-        <h3>${safe(d.title || '未命名梦境')}</h3>
-        <div class="tag">by ${safe(d.nickname || '匿名')}${d.tags?.length ? ' · ' + d.tags.map(safe).join(' · ') : ''}</div>
-        ${d.image ? `<img src="${d.image}" alt="dream-image">` : ''}
-        <p>${safe(d.description || '')}</p>
-        ${num(d.lat) && num(d.lng) ? `<div class="tag">坐标：${d.lat}, ${d.lng}</div>` : ''}
-      </div>
-    `).join('');
-  }
-
-  function fileToDataURL(file) {
-    return new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => resolve(r.result);
-      r.onerror = reject;
-      r.readAsDataURL(file);
-    });
-  }
-
-  function safe(s) {
-    return (s || '').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-  }
-  function dateStr(iso) {
-    try { return new Date(iso).toLocaleString(); } catch { return ''; }
-  }
-  function num(v) { return typeof v === 'number' && !Number.isNaN(v); }
 </script>
