@@ -1,23 +1,77 @@
-<!DOCTYPE html>
-<html lang="zh">
+<!doctype html>
+<html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<title>Dodva · 梦境上传入口 🪐</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>提交梦境 · Dodva Universe</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .container {max-width: 680px; margin: 40px auto; padding: 20px;}
+    .card {background: rgba(255,255,255,0.05); border-radius: 12px; padding: 20px;}
+    label {display: block; margin-bottom: 14px;}
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      background: rgba(0,0,0,0.25);
+      color: #fff;
+    }
+    button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      cursor: pointer;
+    }
+    button:hover {background: rgba(255,255,255,0.25);}
+  </style>
 </head>
 <body>
-<h1>✨ 上传你的梦境</h1>
-<form action="#" method="post" enctype="multipart/form-data">
-    <label>梦境标题：</label>
-    <input type="text" name="title" placeholder="写下梦境标题..." required><br><br>
 
-    <label>梦境描述：</label>
-    <textarea name="description" rows="5" placeholder="详细描述你的梦..." required></textarea><br><br>
+<header>
+  <div>🌌 Dodva Universe</div>
+  <nav>
+    <a href="index.html">首页</a>
+    <a href="dream-map.html">Dream Map</a>
+    <a href="gallery.html">Gallery</a>
+  </nav>
+</header>
 
-    <label>上传图片：</label>
-    <input type="file" name="image" accept="image/*" required><br><br>
+<div class="container">
+  <div class="card">
+    <h2>📝 提交你的梦境</h2>
+    <p>成为 Dodva 宇宙居民，把你的梦放进地图。</p>
 
-    <input type="submit" value="上传梦境">
-</form>
+    <!-- Netlify 表单开始 -->
+    <form name="dreamUpload" method="POST" data-netlify="true">
+      <label>
+        昵称：
+        <input type="text" name="nickname" placeholder="你的名字" required>
+      </label>
+      <label>
+        梦境标题：
+        <input type="text" name="title" placeholder="梦境标题" required>
+      </label>
+      <label>
+        梦境描述：
+        <textarea name="description" rows="5" placeholder="写下画面、情绪、启示…" required></textarea>
+      </label>
+      <label>
+        关键词（逗号分隔）：
+        <input type="text" name="tags" placeholder="星云,海岛,玫瑰">
+      </label>
+      <button type="submit">✨ 发布梦境</button>
+    </form>
+    <!-- Netlify 表单结束 -->
+
+  </div>
+</div>
+
+<footer>
+  © 2025 Dodva Universe
+</footer>
+
 </body>
 </html>
