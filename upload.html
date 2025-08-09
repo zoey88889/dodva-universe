@@ -41,37 +41,69 @@
 
 <div class="container">
   <div class="card">
-    <h2>📝 提交你的梦境</h2>
-    <p>成为 Dodva 宇宙居民，把你的梦放进地图。</p>
+    <h2>📝 提交梦境</h2>
 
-    <!-- Netlify 表单开始 -->
-    <form name="dreamUpload" method="POST" data-netlify="true">
-      <label>
-        昵称：
-        <input type="text" name="nickname" placeholder="你的名字" required>
-      </label>
-      <label>
-        梦境标题：
-        <input type="text" name="title" placeholder="梦境标题" required>
-      </label>
-      <label>
-        梦境描述：
-        <textarea name="description" rows="5" placeholder="写下画面、情绪、启示…" required></textarea>
-      </label>
-      <label>
-        关键词（逗号分隔）：
-        <input type="text" name="tags" placeholder="星云,海岛,玫瑰">
-      </label>
-      <button type="submit">✨ 发布梦境</button>
-    </form>
-    <!-- Netlify 表单结束 -->
+<form id="dreamForm">
+  <label>
+    昵称：
+    <input type="text" name="nickname" placeholder="你的名字" required>
+  </label>
+  <label>
+    梦境标题：
+    <input type="text" name="title" placeholder="梦境标题" required>
+  </label>
+  <label>
+    梦境描述：
+    <textarea name="description" rows="5" placeholder="写下画面、情绪、启示…" required></textarea>
+  </label>
+  <label>
+    关键词（逗号分隔）：
+    <input type="text" name="tags" placeholder="星云,海岛,玫瑰">
+  </label>
+  <label>
+    纬度：
+    <input type="number" name="lat" step="0.0001" placeholder="如 22.33">
+  </label>
+  <label>
+    经度：
+    <input type="number" name="lng" step="0.0001" placeholder="如 55.66">
+  </label>
+  <label>
+    图片链接：
+    <input type="url" name="image" placeholder="https://...">
+  </label>
+  <button type="submit">✨ 发布梦境</button>
+</form>
 
-  </div>
-</div>
+<script>
+document.getElementById('dreamForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
 
-<footer>
-  © 2025 Dodva Universe
-</footer>
+  const formData = new FormData(e.target);
+  const dream = {
+    id: Date.now(),
+    nickname: formData.get('nickname'),
+    title: formData.get('title'),
+    description: formData.get('description'),
+    tags: formData.get('tags').split(',').map(t => t.trim()),
+    lat: parseFloat(formData.get('lat') || 0),
+    lng: parseFloat(formData.get('lng') || 0),
+    image: formData.get('image') || "",
+    createdAt: new Date().toISOString()
+  };
 
-</body>
-</html>
+  // 发到 Zapier Webhook（替换为你的 Zapier Webhook URL）
+  const res = await fetch('https://hooks.zapier.com/hooks/catch/你的ID', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(dream)
+  });
+
+  if (res.ok) {
+    alert('✅ 梦境提交成功！');
+    e.target.reset();
+  } else {
+    alert('❌ 提交失败，请重试');
+  }
+});
+</script>
