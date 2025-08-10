@@ -1,24 +1,13 @@
 [
   {
-    "id": 2,
-    "nickname": "Xinyue",
-    "title": "拥抱银河",
-    "description": "在星云深处的怀抱",
-    "tags": ["浪漫","银河"],
-    "lat": 22,
-    "lng": 55,
+    "id": 1754783914958,
+    "nickname": "匿名",
+    "title": "未命名梦境",
+    "description": "",
+    "tags": [],
+    "lat": null,
+    "lng": null,
     "image": "",
-    "createdAt": "2025-08-08T12:00:00.000Z"
-  },
-  {
-    "id": 1,
-    "nickname": "Dodva",
-    "title": "起源星球",
-    "description": "我们相遇的地方 · D-0",
-    "tags": ["起源","相遇"],
-    "lat": 10,
-    "lng": 40,
-    "image": "",
-    "createdAt": "2025-08-08T00:00:00.000Z"
+    "createdAt": "2025-08-09T23:58:34.958Z"
   }
 ]
