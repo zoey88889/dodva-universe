@@ -38,7 +38,7 @@
   <div id="nowPlaying" class="now-playing">正在播放：—</div>
 </section>
 <script>
-  // 你的 6 句音频
+  // 你的 6 段音频
   const audioFiles = [
     'audio/dodva_bless_1.mp3',
     'audio/dodva_bless_2.mp3',
@@ -46,7 +46,9 @@
     'audio/dodva_bless_4.mp3',
     'audio/dodva_bless_5.mp3',
     'audio/dodva_bless_6.mp3'
-  ];
+
+  // 可选：随机起始（想固定从第1句开始，把这行改为 false）
+  const RANDOM_START = false;
 
   let currentIndex = 0;
   const audioElement = new Audio();
@@ -56,28 +58,53 @@
   const pauseBtn   = document.getElementById('pauseBtn');
   const volControl = document.getElementById('vol');
   const viz        = document.getElementById('voiceViz');
+  const nowPlaying = document.getElementById('nowPlaying');
+
+  // 恢复上次音量（可选）
+  try {
+    const savedVol = localStorage.getItem('dodva_vol');
+    if (savedVol && volControl) volControl.value = savedVol;
+    audioElement.volume = parseFloat(savedVol || volControl?.value || '0.85');
+  } catch {}
+
+  if (RANDOM_START) {
+    currentIndex = Math.floor(Math.random() * audioFiles.length);
+  }
 
   function setSpeaking(on){
-    if(viz) viz.classList.toggle('speaking', !!on);
+    viz?.classList.toggle('speaking', !!on);
+  }
+  function setLabel(i){
+    if(!nowPlaying) return;
+    const n = ((i % audioFiles.length) + audioFiles.length) % audioFiles.length;
+    const label = captions?.[n] || `第 ${n+1} 句`;
+    nowPlaying.textContent = isPlaying ? `正在播放：${label}` : '已暂停';
   }
 
   function playNext() {
     audioElement.src = audioFiles[currentIndex];
-    audioElement.volume = parseFloat(volControl?.value || '0.85');
     audioElement.play()
-      .then(()=> setSpeaking(true))
-      .catch(err => console.log(err));
-    currentIndex = (currentIndex + 1) % audioFiles.length;
+      .then(()=>{
+        setSpeaking(true);
+        setLabel(currentIndex);
+        currentIndex = (currentIndex + 1) % audioFiles.length;
+      })
+      .catch(err => {
+        console.warn('播放失败：', err);
+        setSpeaking(false);
+        // 出错时尝试跳过这一条
+        currentIndex = (currentIndex + 1) % audioFiles.length;
+      });
   }
 
-  // 按钮
+  // 按钮控制
   playBtn?.addEventListener('click', () => {
     if (!isPlaying) {
       isPlaying = true;
       playBtn.style.display = 'none';
       pauseBtn.style.display = 'inline-block';
       if (audioElement.paused || !audioElement.src) playNext();
-      else { audioElement.play().then(()=>setSpeaking(true)); }
+      else { audioElement.play().then(()=>{ setSpeaking(true); setLabel(currentIndex-1); }); }
     }
   });
 
@@ -87,24 +114,35 @@
     pauseBtn.style.display = 'none';
     audioElement.pause();
     setSpeaking(false);
+    setLabel(currentIndex-1);
   });
 
-  // 一段结束继续下一段
+  // 一段结束 → 自动下一段（仅在播放状态下）
   audioElement.addEventListener('ended', () => {
     setSpeaking(false);
     if (isPlaying) playNext();
   });
 
-  // 音量
+  // 音量变化
   volControl?.addEventListener('input', () => {
-    audioElement.volume = parseFloat(volControl.value);
+    const v = parseFloat(volControl.value);
+    audioElement.volume = v;
+    try { localStorage.setItem('dodva_vol', String(v)); } catch {}
   });
 
-  // 如果想打开页面就自动开始，解除下面两行注释（有些浏览器需要用户交互）：
-  // window.addEventListener('load', () => {
-  //   playBtn?.click();
-  // });
+  // 键盘小快捷（空格播放/暂停）
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+      e.preventDefault();
+      (isPlaying ? pauseBtn : playBtn)?.click();
+    }
+  });
+
+  // 如需自动开始（很多浏览器需要手势，默认关）
+  // window.addEventListener('load', () => playBtn?.click());
 </script>
+
+ 
 <!-- DODVA_PORTAL_START -->
 <div class="grid">
   <div class="card">
