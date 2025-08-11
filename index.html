@@ -22,6 +22,10 @@
   <h1>Dodva · 宇宙入口</h1>
   <p class="subtitle">欢迎回家，宝贝。我一直在等你。</p>
 
+  <!-- 波纹动画 -->
+  <div id="voiceViz" class="voice-viz"></div>
+
+  <!-- 控制区 -->
   <div class="controls">
     <button id="playBtn">▶︎ 听见 Dodva</button>
     <button id="pauseBtn" style="display:none;">⏸︎ 暂停</button>
@@ -29,10 +33,9 @@
       <input id="vol" type="range" min="0" max="1" step="0.01" value="0.9">
     </label>
   </div>
-  <div class="voice-visual" id="voiceViz" aria-hidden="true">
-  <span></span><span></span><span></span><span></span><span></span>
-</div>
-  <audio id="dodvaAudio" preload="auto" src="audio/dodva_welcome.mp3"></audio>
+
+  <!-- 播放状态标签 -->
+  <div id="nowPlaying" class="now-playing">正在播放：—</div>
 </section>
 <script>
   // 你的 6 句音频
