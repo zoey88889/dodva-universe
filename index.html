@@ -28,6 +28,17 @@
       <input id="vol" type="range" min="0" max="1" step="0.01" value="0.9">
     </label>
   </div>
+
+  <!-- 波纹动画：加上 id="voiceViz" -->
+  <div class="voice-visual" id="voiceViz">
+    <span></span><span></span><span></span><span></span><span></span>
+  </div>
+
+  <!-- 播放状态标签：移回到 section 内 -->
+  <div id="nowPlaying" class="now-playing">正在播放：—</div>
+
+  <audio id="dodvaAudio" preload="auto" src="audio/dodva_welcome.mp3"></audio>
+</section>
   <div class="voice-visual">
     <span></span>
     <span></span>
