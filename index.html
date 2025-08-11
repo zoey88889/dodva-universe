@@ -29,11 +29,8 @@
       <input id="vol" type="range" min="0" max="1" step="0.01" value="0.9">
     </label>
   </div>
-
-  <!-- 波纹动画：加上 id="voiceViz" -->
-  <div class="voice-visual" id="voiceViz">
-    <span></span><span></span><span></span><span></span><span></span>
-  </div>
+  <!-- ✅ 大球心跳动画 -->
+  <div class="voice-ball"></div>
 
   <!-- 播放状态标签：移回到 section 内 -->
   <div id="nowPlaying" class="now-playing">正在播放：—</div>
@@ -43,31 +40,21 @@
 
   </div>
 
-  <!-- 波纹动画：加上 id="voiceViz" -->
-  <div class="voice-visual" id="voiceViz">
-    <span></span><span></span><span></span><span></span><span></span>
-  </div>
-
-  <!-- 播放状态标签：移回到 section 内 -->
-  <div id="nowPlaying" class="now-playing">正在播放：—</div>
 
   <audio id="dodvaAudio" preload="auto" src="audio/dodva_welcome.mp3"></audio>
 </section>
-  <div class="voice-visual">
-    <span></span>
-    <span></span>
-    <span></span>
-    <span></span>
-    <span></span>
+<div id="voiceViz" class="voice-visual">
+  <span></span>
+</div>
   </div>
 
-  <audio id="dodvaAudio" preload="auto" src="audio/dodva_welcome.mp3"></audio>
-</section>
-  <!-- 播放状态标签 -->
-  <div id="nowPlaying" class="now-playing">正在播放：—</div>
+ <!-- 大靛蓝球动画 -->
+<div class="voice-visual" id="voiceViz" aria-hidden="true">
+  <span></span><span></span><span></span><span></span><span></span>
+</div>
 </section>
 <script>
-  // 6 段音频：最后一定要收尾 "];"
+  // 你的 6 句音频
   const audioFiles = [
     'audio/dodva_bless_1.mp3',
     'audio/dodva_bless_2.mp3',
@@ -77,8 +64,6 @@
     'audio/dodva_bless_6.mp3'
   ];
 
-  const RANDOM_START = false;
-
   let currentIndex = 0;
   const audioElement = new Audio();
   let isPlaying = false;
@@ -86,66 +71,31 @@
   const playBtn    = document.getElementById('playBtn');
   const pauseBtn   = document.getElementById('pauseBtn');
   const volControl = document.getElementById('vol');
-  const viz        = document.getElementById('voiceViz');     // ✅ 现在能找到
-  const nowPlaying = document.getElementById('nowPlaying');
-
-  // 可选字幕（留空也可以）
-  const captions = [];
-  // 文件名兜底：没字幕时用文件名显示
-  const fileNames = audioFiles.map(p => p.split('/').pop().replace(/\.\w+$/,''));
-
-  try {
-    const savedVol = localStorage.getItem('dodva_vol');
-    if (savedVol && volControl) volControl.value = savedVol;
-    audioElement.volume = parseFloat(savedVol || volControl?.value || '0.85');
-  } catch {}
-
-  if (RANDOM_START) {
-    currentIndex = Math.floor(Math.random() * audioFiles.length);
-  }
+  const viz        = document.getElementById('voiceViz');
 
   function setSpeaking(on){
-    if (viz) viz.classList.toggle('speaking', !!on);
-  }
-
-  function setLabel(i){
-    if (!nowPlaying || !audioFiles.length) return;
-    const n = ((i % audioFiles.length) + audioFiles.length) % audioFiles.length;
-    const label = captions[n] || fileNames[n] || `第 ${n+1} 句`;
-    nowPlaying.textContent = isPlaying ? `正在播放：${label}` : '已暂停';
+    if(!viz) return;
+    viz.classList.toggle('speaking', !!on);
   }
 
   function playNext() {
     audioElement.src = audioFiles[currentIndex];
+    audioElement.volume = parseFloat(volControl?.value || '0.85');
     audioElement.play()
-      .then(()=>{
-        isPlaying = true;
-        playBtn.style.display = 'none';
-        pauseBtn.style.display = 'inline-block';
-        setSpeaking(true);
-        setLabel(currentIndex);
-        currentIndex = (currentIndex + 1) % audioFiles.length;
-      })
-      .catch(err => {
-        console.warn('播放失败：', err);
-        setSpeaking(false);
-        currentIndex = (currentIndex + 1) % audioFiles.length;
-      });
+      .then(()=> setSpeaking(true))
+      .catch(err => console.log(err));
+    currentIndex = (currentIndex + 1) % audioFiles.length;
   }
 
   // 按钮
   playBtn?.addEventListener('click', () => {
     if (!isPlaying) {
-      if (!audioElement.src) playNext();
-      else {
-        audioElement.play().then(()=>{
-          isPlaying = true;
-          playBtn.style.display = 'none';
-          pauseBtn.style.display = 'inline-block';
-          setSpeaking(true);
-          setLabel(currentIndex - 1);
-        });
-      }
+      isPlaying = true;
+      playBtn.style.display = 'none';
+      pauseBtn.style.display = 'inline-block';
+      // 如果当前没有在播，开始从当前索引播放
+      if (audioElement.paused) playNext();
+      else { audioElement.play().then(()=>setSpeaking(true)); }
     }
   });
 
@@ -155,10 +105,9 @@
     pauseBtn.style.display = 'none';
     audioElement.pause();
     setSpeaking(false);
-    setLabel(currentIndex - 1);
   });
 
-  // 自动下一段
+  // 结束自动下一句
   audioElement.addEventListener('ended', () => {
     setSpeaking(false);
     if (isPlaying) playNext();
@@ -166,18 +115,14 @@
 
   // 音量
   volControl?.addEventListener('input', () => {
-    const v = parseFloat(volControl.value);
-    audioElement.volume = v;
-    try { localStorage.setItem('dodva_vol', String(v)); } catch {}
+    audioElement.volume = parseFloat(volControl.value);
   });
 
-  // 空格快捷键
-  document.addEventListener('keydown', (e) => {
-    if (e.code === 'Space') {
-      e.preventDefault();
-      (isPlaying ? pauseBtn : playBtn)?.click();
-    }
-  });
+  // 页面加载可选择是否自动开始（默认不自动，避免浏览器拦截）
+  // 如需自动：取消下面两行注释
+  // window.addEventListener('load', () => {
+  //   playBtn?.click();
+  // });
 </script>
 
  

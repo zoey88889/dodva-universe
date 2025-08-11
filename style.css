@@ -13,66 +13,37 @@ footer{text-align:center;color:var(--muted);padding:36px 16px}
 .notice{color:var(--muted);font-size:.92rem}
 img.resp{max-width:100%;height:auto;border-radius:12px;border:1px solid rgba(255,255,255,.1)}
 .audio-wrap{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:16px}
-
 .universe-entry {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;   /* 垂直排布标题、按钮、大球 */
+  justify-content: center;  /* 垂直居中（需要父容器有高度） */
+  align-items: center;      /* 水平居中 */
+  min-height: 80vh;         /* 占据屏幕 80% 高度，你也可以改成 100vh 全屏居中 */
   text-align: center;
-  min-height: 60vh;
+}
+/* 大球样式 */
+.voice-ball {
+  width: 80px;  /* 球的直径，可以调大 */
+  height: 80px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #7b9dff, #2a3d9f); /* 靛蓝渐变 */
+  box-shadow: 0 0 30px rgba(91,124,255,0.8);
+  animation: ballHeartbeat 2.5s ease-in-out infinite;
+  margin: 20px auto; /* 居中 */
 }
 
-.controls {
-  margin-top: 15px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-/* ===== 单颗大球：心跳(暂停) + 说话(播放) ===== */
-.voice-visual{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  margin-top:16px;
-  min-height:80px; /* 留出大球空间 */
+/* 温柔心跳（暂停时） */
+@keyframes ballHeartbeat {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(91,124,255,0.8); }
+  50%      { transform: scale(1.05); box-shadow: 0 0 50px rgba(91,124,255,1); }
 }
 
-/* 靛蓝大球球 */
-.voice-visual span{
-  display:inline-block;
-  width:60px; height:60px; border-radius:50%;
-  background: radial-gradient(circle at 30% 30%, #e9efff 0%, #9aaeff 35%, #5b7cff 100%);
-  box-shadow: 0 0 20px rgba(91,124,255,.7), 0 0 40px rgba(91,124,255,.4);
-  opacity:.98;
-  transform-origin:center;
-  animation: pulseBig 2.2s ease-in-out infinite;   /* 暂停时：心跳 */
-  will-change: transform, filter;
+/* 播放状态：更强烈的跳动 */
+.voice-ball.speaking {
+  animation: ballSpeaking 1.2s ease-in-out infinite;
 }
 
-/* 播放中：更快更猛的说话感 */
-.voice-visual.speaking span{
-  animation: speakBig 900ms ease-in-out infinite;
-}
-
-/* 心跳动画：柔和放大缩小 */
-@keyframes pulseBig{
-  0%   { transform: scale(0.92); filter: brightness(.96) }
-  25%  { transform: scale(1.18); filter: brightness(1.08) }
-  50%  { transform: scale(1.00); filter: brightness(1.00) }
-  75%  { transform: scale(1.22); filter: brightness(1.12) }
-  100% { transform: scale(0.92); filter: brightness(.96) }
-}
-
-/* 说话动画：快速鼓点 */
-@keyframes speakBig{
-  0%   { transform: scale(0.85); filter: brightness(.96) }
-  30%  { transform: scale(1.32); filter: brightness(1.12) }
-  55%  { transform: scale(0.95); filter: brightness(1.00) }
-  80%  { transform: scale(1.20); filter: brightness(1.06) }
-  100% { transform: scale(0.85); filter: brightness(.96) }
-}/* ===== Dodva 球球版：心跳(暂停) + 说话(播放) ===== */
-/* （可选）暗色背景下更通透一点 */
-@media (prefers-color-scheme: dark){
-  .voice-visual span{ box-shadow: 0 0 10px rgba(111,140,255,.7) }
+@keyframes ballSpeaking {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 35px rgba(91,124,255,1); }
+  50%      { transform: scale(1.15); box-shadow: 0 0 70px rgba(91,124,255,1); }
 }
