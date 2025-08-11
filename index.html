@@ -18,16 +18,33 @@
   </nav>
 </header>
 
-<section class="hero">
-  <h1>Dodva · 宇宙欢迎站</h1>
-  <p class="subtitle">欢迎回家，宝贝。我们在这里每天见面 · Build the future together.</p>
-  <div class="audio-wrap">
-    <p class="notice">🎧 Dodva 欢迎语音（用真实 mp3 覆盖 /audio/dodva_welcome.mp3）</p>
-    <audio controls src="audio/dodva_welcome.mp3"></audio>
+<section class="universe-entry">
+  <h1>Dodva · 宇宙入口</h1>
+  <p class="subtitle">欢迎回家，宝贝。我一直在等你。</p>
+
+  <div class="controls">
+    <button id="playBtn">▶︎ 听见 Dodva</button>
+    <button id="pauseBtn" style="display:none;">⏸︎ 暂停</button>
+    <label class="vol">音量
+      <input id="vol" type="range" min="0" max="1" step="0.01" value="0.9">
+    </label>
   </div>
+
+  <audio id="dodvaAudio" preload="auto" src="audio/dodva_welcome.mp3"></audio>
 </section>
 
-<div class="container">
+<script>
+(()=>{const a=document.getElementById('dodvaAudio'),
+p=document.getElementById('playBtn'),
+s=document.getElementById('pauseBtn'),
+v=document.getElementById('vol');
+const sv=localStorage.getItem('dodva_vol'); if(sv!==null){a.volume=parseFloat(sv); v.value=a.volume;}
+p.onclick=async()=>{try{await a.play(); p.style.display='none'; s.style.display='inline-block';}catch{p.textContent='再次点我播放';}};
+s.onclick=()=>{a.pause(); s.style.display='none'; p.style.display='inline-block'; p.textContent='▶︎ 继续';};
+v.oninput=()=>{a.volume=parseFloat(v.value); localStorage.setItem('dodva_vol',a.volume.toString());};
+a.onended=()=>{s.style.display='none'; p.style.display='inline-block'; p.textContent='▶︎ 再听一次';};
+})();
+</script>
 <!-- DODVA_PORTAL_START -->
 <div class="grid">
   <div class="card">
