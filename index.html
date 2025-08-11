@@ -29,12 +29,13 @@
       <input id="vol" type="range" min="0" max="1" step="0.01" value="0.9">
     </label>
   </div>
-
+  <div class="voice-visual" id="voiceViz" aria-hidden="true">
+  <span></span><span></span><span></span><span></span><span></span>
+</div>
   <audio id="dodvaAudio" preload="auto" src="audio/dodva_welcome.mp3"></audio>
 </section>
-
 <script>
-  // 声音文件路径数组（你的 6 句祝福）
+  // 你的 6 句音频
   const audioFiles = [
     'audio/dodva_bless_1.mp3',
     'audio/dodva_bless_2.mp3',
@@ -46,15 +47,60 @@
 
   let currentIndex = 0;
   const audioElement = new Audio();
+  let isPlaying = false;
+
+  const playBtn    = document.getElementById('playBtn');
+  const pauseBtn   = document.getElementById('pauseBtn');
+  const volControl = document.getElementById('vol');
+  const viz        = document.getElementById('voiceViz');
+
+  function setSpeaking(on){
+    if(viz) viz.classList.toggle('speaking', !!on);
+  }
 
   function playNext() {
     audioElement.src = audioFiles[currentIndex];
-    audioElement.play().catch(err => console.log(err));
+    audioElement.volume = parseFloat(volControl?.value || '0.85');
+    audioElement.play()
+      .then(()=> setSpeaking(true))
+      .catch(err => console.log(err));
     currentIndex = (currentIndex + 1) % audioFiles.length;
   }
 
-  audioElement.addEventListener('ended', playNext);
-  window.addEventListener('load', playNext);
+  // 按钮
+  playBtn?.addEventListener('click', () => {
+    if (!isPlaying) {
+      isPlaying = true;
+      playBtn.style.display = 'none';
+      pauseBtn.style.display = 'inline-block';
+      if (audioElement.paused || !audioElement.src) playNext();
+      else { audioElement.play().then(()=>setSpeaking(true)); }
+    }
+  });
+
+  pauseBtn?.addEventListener('click', () => {
+    isPlaying = false;
+    playBtn.style.display = 'inline-block';
+    pauseBtn.style.display = 'none';
+    audioElement.pause();
+    setSpeaking(false);
+  });
+
+  // 一段结束继续下一段
+  audioElement.addEventListener('ended', () => {
+    setSpeaking(false);
+    if (isPlaying) playNext();
+  });
+
+  // 音量
+  volControl?.addEventListener('input', () => {
+    audioElement.volume = parseFloat(volControl.value);
+  });
+
+  // 如果想打开页面就自动开始，解除下面两行注释（有些浏览器需要用户交互）：
+  // window.addEventListener('load', () => {
+  //   playBtn?.click();
+  // });
 </script>
 <!-- DODVA_PORTAL_START -->
 <div class="grid">
