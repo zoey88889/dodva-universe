@@ -34,16 +34,27 @@
 </section>
 
 <script>
-(()=>{const a=document.getElementById('dodvaAudio'),
-p=document.getElementById('playBtn'),
-s=document.getElementById('pauseBtn'),
-v=document.getElementById('vol');
-const sv=localStorage.getItem('dodva_vol'); if(sv!==null){a.volume=parseFloat(sv); v.value=a.volume;}
-p.onclick=async()=>{try{await a.play(); p.style.display='none'; s.style.display='inline-block';}catch{p.textContent='再次点我播放';}};
-s.onclick=()=>{a.pause(); s.style.display='none'; p.style.display='inline-block'; p.textContent='▶︎ 继续';};
-v.oninput=()=>{a.volume=parseFloat(v.value); localStorage.setItem('dodva_vol',a.volume.toString());};
-a.onended=()=>{s.style.display='none'; p.style.display='inline-block'; p.textContent='▶︎ 再听一次';};
-})();
+  // 声音文件路径数组（你的 6 句祝福）
+  const audioFiles = [
+    'audio/dodva_bless_1.mp3',
+    'audio/dodva_bless_2.mp3',
+    'audio/dodva_bless_3.mp3',
+    'audio/dodva_bless_4.mp3',
+    'audio/dodva_bless_5.mp3',
+    'audio/dodva_bless_6.mp3'
+  ];
+
+  let currentIndex = 0;
+  const audioElement = new Audio();
+
+  function playNext() {
+    audioElement.src = audioFiles[currentIndex];
+    audioElement.play().catch(err => console.log(err));
+    currentIndex = (currentIndex + 1) % audioFiles.length;
+  }
+
+  audioElement.addEventListener('ended', playNext);
+  window.addEventListener('load', playNext);
 </script>
 <!-- DODVA_PORTAL_START -->
 <div class="grid">
