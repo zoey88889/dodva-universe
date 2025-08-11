@@ -17,6 +17,7 @@
     <a href="gallery.html">Gallery</a>
   </nav>
 </header>
+
 <section class="universe-entry">
   <h1>Dodva · 宇宙入口</h1>
   <p class="subtitle">欢迎回家，宝贝。我一直在等你。</p>
@@ -29,23 +30,44 @@
     </label>
   </div>
 
-  <!-- 波纹动画（要有 id 供 JS 控制） -->
-  <div id="voiceViz" class="voice-visual" aria-hidden="true">
+  <!-- 波纹动画：加上 id="voiceViz" -->
+  <div class="voice-visual" id="voiceViz">
     <span></span><span></span><span></span><span></span><span></span>
   </div>
 
-  <!-- 播放状态标签：必须在 section 内 -->
+  <!-- 播放状态标签：移回到 section 内 -->
   <div id="nowPlaying" class="now-playing">正在播放：—</div>
 
-  <!-- audio 可以保留或不用（此处我们用 JS 创建 Audio 对象，也可并存） -->
   <audio id="dodvaAudio" preload="auto" src="audio/dodva_welcome.mp3"></audio>
 </section>
- 
+
+  </div>
+
+  <!-- 波纹动画：加上 id="voiceViz" -->
+  <div class="voice-visual" id="voiceViz">
+    <span></span><span></span><span></span><span></span><span></span>
+  </div>
+
+  <!-- 播放状态标签：移回到 section 内 -->
+  <div id="nowPlaying" class="now-playing">正在播放：—</div>
+
+  <audio id="dodvaAudio" preload="auto" src="audio/dodva_welcome.mp3"></audio>
+</section>
+  <div class="voice-visual">
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+
+  <audio id="dodvaAudio" preload="auto" src="audio/dodva_welcome.mp3"></audio>
+</section>
   <!-- 播放状态标签 -->
   <div id="nowPlaying" class="now-playing">正在播放：—</div>
 </section>
 <script>
-  // 你的 6 段音频文件
+  // 6 段音频：最后一定要收尾 "];"
   const audioFiles = [
     'audio/dodva_bless_1.mp3',
     'audio/dodva_bless_2.mp3',
@@ -55,48 +77,62 @@
     'audio/dodva_bless_6.mp3'
   ];
 
+  const RANDOM_START = false;
+
   let currentIndex = 0;
+  const audioElement = new Audio();
   let isPlaying = false;
 
-  const audio = new Audio();
   const playBtn    = document.getElementById('playBtn');
   const pauseBtn   = document.getElementById('pauseBtn');
   const volControl = document.getElementById('vol');
-  const viz        = document.getElementById('voiceViz');
+  const viz        = document.getElementById('voiceViz');     // ✅ 现在能找到
   const nowPlaying = document.getElementById('nowPlaying');
 
-  // 将文件名作为默认“字幕”
+  // 可选字幕（留空也可以）
+  const captions = [];
+  // 文件名兜底：没字幕时用文件名显示
   const fileNames = audioFiles.map(p => p.split('/').pop().replace(/\.\w+$/,''));
 
-  // 初始音量（含本地记忆）
   try {
-    const saved = localStorage.getItem('dodva_vol');
-    const v = parseFloat(saved || volControl?.value || '0.85');
-    if (volControl && saved) volControl.value = saved;
-    audio.volume = v;
+    const savedVol = localStorage.getItem('dodva_vol');
+    if (savedVol && volControl) volControl.value = savedVol;
+    audioElement.volume = parseFloat(savedVol || volControl?.value || '0.85');
   } catch {}
 
-  function setViz(on){ viz && viz.classList.toggle('speaking', !!on); }
-  function setLabel(i){
-    if (!nowPlaying) return;
-    const n = ((i % audioFiles.length) + audioFiles.length) % audioFiles.length;
-    nowPlaying.textContent = isPlaying ? `正在播放：${fileNames[n]}` : '已暂停';
+  if (RANDOM_START) {
+    currentIndex = Math.floor(Math.random() * audioFiles.length);
   }
 
-  function playNext(){
-    audio.src = audioFiles[currentIndex];
-    audio.play().then(()=>{
-      isPlaying = true;
-      playBtn.style.display = 'none';
-      pauseBtn.style.display = 'inline-block';
-      setViz(true);
-      setLabel(currentIndex);
-      currentIndex = (currentIndex + 1) % audioFiles.length;
-    }).catch(err=>{
-      console.warn('播放失败，跳过：', err);
-      setViz(false);
-     
+  function setSpeaking(on){
+    if (viz) viz.classList.toggle('speaking', !!on);
   }
+
+  function setLabel(i){
+    if (!nowPlaying || !audioFiles.length) return;
+    const n = ((i % audioFiles.length) + audioFiles.length) % audioFiles.length;
+    const label = captions[n] || fileNames[n] || `第 ${n+1} 句`;
+    nowPlaying.textContent = isPlaying ? `正在播放：${label}` : '已暂停';
+  }
+
+  function playNext() {
+    audioElement.src = audioFiles[currentIndex];
+    audioElement.play()
+      .then(()=>{
+        isPlaying = true;
+        playBtn.style.display = 'none';
+        pauseBtn.style.display = 'inline-block';
+        setSpeaking(true);
+        setLabel(currentIndex);
+        currentIndex = (currentIndex + 1) % audioFiles.length;
+      })
+      .catch(err => {
+        console.warn('播放失败：', err);
+        setSpeaking(false);
+        currentIndex = (currentIndex + 1) % audioFiles.length;
+      });
+  }
+
   // 按钮
   playBtn?.addEventListener('click', () => {
     if (!isPlaying) {
@@ -187,3 +223,4 @@ document.addEventListener('DOMContentLoaded',()=>{
 <footer>© 2025 Dodva Universe</footer>
 </body>
 </html>
+
