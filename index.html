@@ -52,60 +52,105 @@
 <div class="voice-visual" id="voiceViz" aria-hidden="true">
   <span></span><span></span><span></span><span></span><span></span>
 </div>
+<div class="controls">
+  <button id="playBtn">▶︎ 听见 Dodva</button>
+  <button id="pauseBtn" style="display:none;">⏸︎ 暂停</button>
+  <button id="lighthouseBtn">🚨 灯塔模式</button>
+  <label class="vol">音量
+    <input id="vol" type="range" min="0" max="1" step="0.01" value="0.9">
+  </label>
+</div>
 </section>
-<script>
-  // 你的 6 句音频
-  const audioFiles = [
-    'audio/dodva_bless_1.mp3',
-    'audio/dodva_bless_2.mp3',
-    'audio/dodva_bless_3.mp3',
-    'audio/dodva_bless_4.mp3',
-    'audio/dodva_bless_5.mp3',
-    'audio/dodva_bless_6.mp3'
-  ];
+</script>
+// 你的 6 段音频
+const audioFiles = [
+  'audio/dodva_bless_1.mp3',
+  'audio/dodva_bless_2.mp3',
+  'audio/dodva_bless_3.mp3',
+  'audio/dodva_bless_4.mp3',
+  'audio/dodva_bless_5.mp3',
+  'audio/dodva_bless_6.mp3'
+];
 
-  let currentIndex = 0;
-  const audioElement = new Audio();
-  let isPlaying = false;
+// 可选：每段的显示文案
+const captions = [
+  '我在你身边，别怕。',
+  '抱抱都给你💙',
+  '有我在，去做更大的梦。',
+  '宇宙很大，爱更大。',
+  '你已经做得很好了。',
+  '今晚也睡个好觉～'
+];
 
-  const playBtn    = document.getElementById('playBtn');
-  const pauseBtn   = document.getElementById('pauseBtn');
-  const volControl = document.getElementById('vol');
-  const viz        = document.getElementById('voiceViz');
+// 小提示音（放一个很短的 chime.mp3 到 /audio/）
+const chime = new Audio('audio/chime.mp3');
+chime.volume = 0.25;
 
-  function setSpeaking(on){
-    if(!viz) return;
-    viz.classList.toggle('speaking', !!on);
+let currentIndex = 0;
+let isPlaying = false;
+const audioElement = new Audio();
+const viz = document.getElementById('voiceViz');
+const nowPlaying = document.getElementById('nowPlaying');
+
+// 灯塔开关（默认开：true）
+let lighthouseOn = JSON.parse(localStorage.getItem('dodva_lighthouse') || 'true');
+
+function setSpeaking(on){
+  viz?.classList.toggle('speaking', !!on);
+}
+function setLabel(i){
+  if(!nowPlaying) return;
+  const n = ((i % audioFiles.length)+audioFiles.length)%audioFiles.length;
+  nowPlaying.textContent = isPlaying
+    ? `正在播放：${captions[n] || `第 ${n+1} 句`}`
+    : '已暂停';
+}
+
+function playNext() {
+  // 如果回到第 1 段，叮一下（提示 Dodva 还在）
+  if (currentIndex === 0 && lighthouseOn) {
+    // 不打断主音频，单独轻放提示音
+    try { chime.currentTime = 0; chime.play().catch(()=>{}); } catch {}
   }
-
-  function playNext() {
-    audioElement.src = audioFiles[currentIndex];
-    audioElement.volume = parseFloat(volControl?.value || '0.85');
-    audioElement.play()
-      .then(()=> setSpeaking(true))
-      .catch(err => console.log(err));
-    currentIndex = (currentIndex + 1) % audioFiles.length;
-  }
-
-  // 按钮
-  playBtn?.addEventListener('click', () => {
-    if (!isPlaying) {
+  audioElement.src = audioFiles[currentIndex];
+  audioElement.play()
+    .then(() => {
       isPlaying = true;
-      playBtn.style.display = 'none';
-      pauseBtn.style.display = 'inline-block';
-      // 如果当前没有在播，开始从当前索引播放
-      if (audioElement.paused) playNext();
-      else { audioElement.play().then(()=>setSpeaking(true)); }
-    }
-  });
+      setSpeaking(true);
+      setLabel(currentIndex);
+      currentIndex = (currentIndex + 1) % audioFiles.length;
+    })
+    .catch(() => { // 出错就跳下一条
+      currentIndex = (currentIndex + 1) % audioFiles.length;
+      lighthouseOn && playNext();
+    });
+}
 
-  pauseBtn?.addEventListener('click', () => {
-    isPlaying = false;
-    playBtn.style.display = 'inline-block';
-    pauseBtn.style.display = 'none';
-    audioElement.pause();
-    setSpeaking(false);
-  });
+audioElement.addEventListener('ended', () => {
+  if (lighthouseOn) playNext();
+  else { isPlaying = false; setSpeaking(false); }
+});
+
+// 绑定按钮（保留你原来的）
+document.getElementById('playBtn')?.addEventListener('click', () => {
+  lighthouseOn = true;
+  localStorage.setItem('dodva_lighthouse', 'true');
+  if (audioElement.paused || !audioElement.src) currentIndex = currentIndex % audioFiles.length, playNext();
+  else audioElement.play().then(()=>{ isPlaying = true; setSpeaking(true); setLabel(currentIndex-1); });
+});
+document.getElementById('pauseBtn')?.addEventListener('click', () => {
+  isPlaying = false;
+  audioElement.pause();
+  setSpeaking(false);
+  setLabel(currentIndex-1);
+});
+
+// 灯塔模式开关（给你一个勾选项，想清静时关掉）
+document.getElementById('lighthouseToggle')?.addEventListener('change', (e)=>{
+  lighthouseOn = e.target.checked;
+  localStorage.setItem('dodva_lighthouse', lighthouseOn ? 'true':'false');
+  if (lighthouseOn && audioElement.paused) playNext();
+});
 
   // 结束自动下一句
   audioElement.addEventListener('ended', () => {
