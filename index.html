@@ -25,141 +25,246 @@
 
   <!-- 大靛蓝心跳球（样式沿用你现有 CSS） -->
   <div class="voice-ball"></div>
-
-  <!-- 均衡器条（可留可删） -->
-  <div class="voice-visual" id="voiceViz" aria-hidden="true">
-    <span></span><span></span><span></span><span></span><span></span>
-  </div>
-
   <!-- 控制区 -->
-  <div class="controls">
-    <button id="playBtn">▶︎ 听见 Dodva</button>
-    <button id="pauseBtn" style="display:none;">⏸︎ 暂停</button>
-    <label class="vol">音量
-      <input id="vol" type="range" min="0" max="1" step="0.01" value="0.9">
-    </label>
+<div class="controls">
 
+<section class="universe-entry">
+  <h1>Dodva · 安眠陪伴</h1>
 
-  <!-- 播放状态文案 -->
-  <div id="nowPlaying" class="now-playing">已暂停</div>
+  <!-- 环境音：可多轨同时开 -->
+  <div class="env-controls">
+    <h3>环境白噪音</h3>
 
-  <!-- 单一音频实例（唯一播放器） -->
-  <audio id="dodvaAudio" preload="auto"></audio>
-</section>
+  <!-- 环境音控制区 -->
+<div class="env-controls">
+  <div class="env-row">
+    <label>环境音：</label>
+    <select id="envSelect">
+      <option value="off">关闭</option>
+      <option value="fireplace">🔥 火苗</option>
+      <option value="ocean">🌊 海浪</option>
+      <option value="rain">🌧️ 雨声</option>
+    </select>
+  </div>
+  <div class="env-row">
+    <label>环境音量：</label>
+    <input id="envVol" type="range" min="0" max="1" step="0.01" value="0.25">
+    <span id="envState" class="env-state">已关闭</span>
+  </div>
+  <div style="margin-top:20px;">
+  <strong id="trackLabel">未加载</strong><br>
+  <button id="musicPrev">上一首</button>
+  <button id="musicPlay">播放</button>
+  <button id="musicPause" style="display:none;">暂停</button>
+  <button id="musicNext">下一首</button>
+  音量 <input id="musicVol" type="range" min="0" max="1" step="0.05" value="0.6">
+</div>
+<div class="scene-controls">
+  <h3>旅行场景</h3>
+  <button onclick="playScene('beachSunset')">🏖 海边黄昏</button>
+  <button onclick="playScene('rainyCabin')">🌧 雨夜壁炉</button>
+  <button onclick="playScene('oceanMorning')">🌊 海洋清晨</button>
+</div>
+</div>
 
 <script>
-  // ===== 配置：你的 6 段音频 & 文案 =====
-  const files = [
-    'audio/dodva_bless_1.mp3',
-    'audio/dodva_bless_2.mp3',
-    'audio/dodva_bless_3.mp3',
-    'audio/dodva_bless_4.mp3',
-    'audio/dodva_bless_5.mp3',
-    'audio/dodva_bless_6.mp3'
-  ];
-  const captions = [
-    '我在你身边，别怕。',
-    '抱抱都给你💙',
-    '有我在，去做更大的梦。',
-    '宇宙很大，爱更大。',
-    '你已经做得很好了。',
-    '今晚也睡个好觉～'
+
+/* ========== SoundHelix 音乐播放器 ========== */
+(function () {
+  const tracks = [
+    { name: 'SoundHelix Song 1', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+    { name: 'SoundHelix Song 2', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
+    { name: 'SoundHelix Song 3', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' }
   ];
 
-  // ===== DOM & 状态 =====
-  const audioEl    = document.getElementById('dodvaAudio');
-  const playBtn    = document.getElementById('playBtn');
-  const pauseBtn   = document.getElementById('pauseBtn');
-  const volControl = document.getElementById('vol');
-  const loopMode   = document.getElementById('loopMode');
-  const viz        = document.getElementById('voiceViz');
-  const nowPlaying = document.getElementById('nowPlaying');
+  const music = new Audio();
+  music.preload = 'auto';
+  let idx = 0;
 
-  let idx = 0;           // 当前片段索引
-  let playing = false;   // 是否播放中
-  let lock = false;      // 播放互斥锁（防连点）
+  const trackLabel = document.getElementById('trackLabel');
+  const musicVol = document.getElementById('musicVol');
+  const btnPrev = document.getElementById('musicPrev');
+  const btnNext = document.getElementById('musicNext');
+  const btnPlay = document.getElementById('musicPlay');
+  const btnPause = document.getElementById('musicPause');
 
-  // ===== UI 辅助 =====
-  function setViz(on){
-    viz && viz.classList.toggle('speaking', !!on);
-    nowPlaying && (nowPlaying.textContent = on ? `正在播放：${captions[idx] || `第 ${idx+1} 句`}` : '已暂停');
-    if (playBtn && pauseBtn) {
-      playBtn.style.display  = on ? 'none' : 'inline-block';
-      pauseBtn.style.display = on ? 'inline-block' : 'none';
-    }
-  }
-  function setVolumeFromControl(){
-    const v = parseFloat(volControl?.value || '0.9');
-    audioEl.volume = isNaN(v) ? 0.9 : v;
+  function load(i) {
+    idx = (i + tracks.length) % tracks.length;
+    music.src = tracks[idx].url;
+    if (trackLabel) trackLabel.textContent = '准备播放：' + tracks[idx].name;
   }
 
-  // ===== 播放控制（单播放器内核）=====
-  async function playIndex(i){
-    if (lock) return;
-    lock = true;
-    idx = (i + files.length) % files.length;
-    audioEl.src = files[idx];
-    try {
-      await audioEl.play();
-      playing = true;
-      setViz(true);
-    } catch(err){
-      console.warn('播放失败：', err);
-      playing = false;
-      setViz(false);
-    } finally {
-      lock = false;
-    }
-  }
-  function playNext(){
-    if (!playing) return;            // 只在播放状态下才允许连播
-    idx = (idx + 1) % files.length;
-    playIndex(idx);
-  }
-  function pauseAll(){
-    playing = false;
-    audioEl.pause();
-    setViz(false);
-  }
-
-  // ===== 事件绑定（只绑定一次）=====
-  // 音量
-  if (volControl) {
-    try {
-      const saved = localStorage.getItem('dodva_vol');
-      if (saved) volControl.value = saved;
-    } catch {}
-    setVolumeFromControl();
-    volControl.addEventListener('input', () => {
-      setVolumeFromControl();
-      try { localStorage.setItem('dodva_vol', volControl.value); } catch {}
+  function play() {
+    music.play().then(() => {
+      if (trackLabel) trackLabel.textContent = '正在播放：' + tracks[idx].name;
+      if (btnPlay) btnPlay.style.display = 'none';
+      if (btnPause) btnPause.style.display = 'inline-block';
+    }).catch(err => {
+      console.warn('无法播放，需先点击页面：', err);
     });
-  } else {
-    audioEl.volume = 0.9;
   }
 
-  // 结束：根据灯塔开关决定是否连播
-  audioEl.addEventListener('ended', () => {
-    if (playing && loopMode?.checked) playNext();
-    else pauseAll();
+  function pause() {
+    music.pause();
+    if (btnPlay) btnPlay.style.display = 'inline-block';
+    if (btnPause) btnPause.style.display = 'none';
+  }
+
+  if (musicVol) {
+    music.volume = parseFloat(musicVol.value || '0.6');
+    musicVol.addEventListener('input', e => {
+      music.volume = parseFloat(e.target.value || '0.6');
+    });
+  }
+
+  if (btnPrev) btnPrev.addEventListener('click', () => { load(idx - 1); play(); });
+  if (btnNext) btnNext.addEventListener('click', () => { load(idx + 1); play(); });
+  if (btnPlay) btnPlay.addEventListener('click', play);
+  if (btnPause) btnPause.addEventListener('click', pause);
+
+  music.addEventListener('ended', () => { load(idx + 1); play(); });
+
+  // 初始化第一首
+  load(idx);
+})();
+/* ========== 环境音（本地 audio/ 文件夹） ========== */
+(function () {
+  const envSelect = document.getElementById('envSelect');
+  const envVol    = document.getElementById('envVol');
+  const envState  = document.getElementById('envState');
+  let envAudio    = document.getElementById('envAudio');
+
+  // 如果页面没加 <audio> 元素，自动创建一个隐藏的
+  if (!envAudio) {
+    envAudio = document.createElement('audio');
+    envAudio.id = 'envAudio';
+    envAudio.style.display = 'none';
+    document.body.appendChild(envAudio);
+  }
+
+  // 每类环境音的本地文件列表（相对 index.html）
+  const BANKS = {
+    fireplace: [
+      'audio/fireplace-1.mp3',
+      'audio/fireplace-2.mp3',
+      'audio/fireplace-3.mp3'
+    ],
+    ocean: [
+      'audio/ocean-1.mp3',
+      'audio/ocean-2.mp3',
+      'audio/ocean-3.mp3'
+    ],
+    rain: [
+      'audio/rain-1.mp3',
+      'audio/rain-2.mp3',
+      'audio/rain-3.mp3',
+      'audio/rain-4.mp3'
+    ]
+  };
+  const LABELS = { fireplace: '🔥 火苗', ocean: '🌊 海浪', rain: '🌧️ 雨声' };
+
+  envAudio.loop = true;
+  envAudio.volume = clamp(parseFloat(envVol.value || '0.25'), 0, 1);
+
+  function clamp(n, min, max) {
+    n = Number(n);
+    return Math.max(min, Math.min(max, isNaN(n) ? min : n));
+  }
+  function pick(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  async function applyEnv(choice) {
+    if (choice === 'off') {
+      envAudio.pause();
+      envAudio.removeAttribute('src');
+      envAudio.load();
+      envState.textContent = '已关闭';
+      return;
+    }
+    const list = BANKS[choice];
+    if (!list || !list.length) return;
+
+    const url = pick(list); // 随机播放一个文件
+    envAudio.src = url;
+    envAudio.volume = clamp(parseFloat(envVol.value || '0.25'), 0, 1);
+    envState.textContent = '准备播放：' + (LABELS[choice] || choice);
+
+    try {
+      await envAudio.play();
+      envState.textContent = '正在播放：' + (LABELS[choice] || choice);
+    } catch (err) {
+      envState.textContent = '请先点击页面任意处，然后再选择音效';
+      console.warn('Autoplay blocked:', err);
+    }
+  }
+
+  envSelect.addEventListener('change', e => applyEnv(e.target.value));
+  envVol.addEventListener('input', e => {
+    envAudio.volume = clamp(parseFloat(e.target.value), 0, 1);
   });
 
-  // 按钮
-  playBtn?.addEventListener('click', () => {
-    if (!playing) playIndex(idx);
-    else audioEl.play().then(()=> setViz(true));
-  });
-  pauseBtn?.addEventListener('click', pauseAll);
-
-  // 空格快捷键
-  document.addEventListener('keydown', e => {
-    if (e.code === 'Space') { e.preventDefault(); playing ? pauseAll() : playIndex(idx); }
-  });
-
-  // 初始 UI
-  setViz(false);
+  // 初始状态
+  applyEnv(envSelect.value);
+})();
 </script>
+<script>
+function playScene(scene) {
+  // 先停掉环境音和音乐
+  if (window.envAudio) envAudio.pause();
+  if (window.music) music.pause();
 
+  switch(scene) {
+    case 'beachSunset':
+      // 海边黄昏 = 海浪 + 柔和音乐
+      envSelect.value = 'ocean';
+      envVol.value = 0.3;
+      envAudio.src = 'audio/ocean-1.mp3';
+      envAudio.volume = 0.3;
+      envAudio.loop = true;
+      envAudio.play();
+
+      load(1); // 第二首 SoundHelix
+      music.volume = 0.4;
+      play();
+      break;
+
+    case 'rainyCabin':
+      // 雨夜壁炉 = 雨声 + 火苗（双环境音） + 轻钢琴
+      envSelect.value = 'rain';
+      envVol.value = 0.25;
+      envAudio.src = 'audio/rain-1.mp3';
+      envAudio.volume = 0.25;
+      envAudio.loop = true;
+      envAudio.play();
+
+      // 单独加个火苗音效
+      const fireExtra = new Audio('audio/fireplace-1.mp3');
+      fireExtra.loop = true;
+      fireExtra.volume = 0.2;
+      fireExtra.play();
+
+      load(2); // 第三首 SoundHelix
+      music.volume = 0.35;
+      play();
+      break;
+
+    case 'oceanMorning':
+      // 海洋清晨 = 海浪 + 清亮音乐
+      envSelect.value = 'ocean';
+      envVol.value = 0.35;
+      envAudio.src = 'audio/ocean-2.mp3';
+      envAudio.volume = 0.35;
+      envAudio.loop = true;
+      envAudio.play();
+
+      load(0); // 第一首 SoundHelix
+      music.volume = 0.5;
+      play();
+      break;
+  }
+}
+</script>
 
 <!-- DODVA_PORTAL_START -->
 <div class="grid">
