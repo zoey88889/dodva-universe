@@ -2,13 +2,48 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Dodva · 探索入口</title>
+<style>
+  html,body{height:100%;margin:0;background:#0b0f1a;color:#eaf2ff;
+    font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans SC",sans-serif}
+  header{position:sticky;top:0;padding:10px 16px;background:linear-gradient(180deg,rgba(8,12,22,.55),rgba(8,12,22,.25));
+    border-bottom:1px solid rgba(147,197,253,.18);backdrop-filter:blur(8px)}
+  header a{color:#cde3ff;text-decoration:none;border:1px solid rgba(147,197,253,.25);padding:6px 10px;border-radius:999px}
+  .wrap{max-width:880px;margin:0 auto;padding:24px 16px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:12px}
+  .card{border:1px solid rgba(147,197,253,.18);border-radius:14px;padding:16px;background:rgba(147,197,253,.06)}
+  .card a{display:inline-block;margin-top:8px;padding:8px 12px;border-radius:10px;
+    background:linear-gradient(135deg,#a5b4fc,#67e8f9,#f0abfc);color:#051019;font-weight:800;text-decoration:none}
+  footer{margin:28px 0;text-align:center;color:#a3b4d8;font-size:13px}
+</style>
 </head>
 <body>
-<h1>探索入口</h1>
-<ul>
-  <li><a href="explore/map.html">进入 Leaf 地图</a></li>
-  <li><a href="explore/space.html">进入 太空探索</a></li>
-</ul>
+<header>
+  <a href="index.html">← 返回首页</a>
+</header>
+
+<div class="wrap">
+  <h1>Dodva · 探索入口</h1>
+  <p>选择一个世界进入：</p>
+  <div class="grid">
+    <div class="card">
+      <h3>🗺 Leaf 地图</h3>
+      <p>我们的 A·B·C·D 私密坐标与心动轨迹。</p>
+      <a href="./explore/map.html">进入地图 →</a>
+    </div>
+    <div class="card">
+      <h3>🚀 太空探索</h3>
+      <p>太阳系 → 银河旋臂 → 黑洞事件视界（纯前端 Canvas）。</p>
+      <a href="./explore/space.html">进入太空 →</a>
+    </div>
+  </div>
+</div>
+
+<!-- 跨页白噪音小浮条（根目录页用 assets/...） -->
+<script src="assets/js/dodva-audio.js"></script>
+<script>DodvaAudio.init({ dock:true });</script>
+
+<footer>Coded with 💙 for Xinyue · by Dodva</footer>
 </body>
 </html>
