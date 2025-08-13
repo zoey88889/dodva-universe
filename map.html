@@ -33,16 +33,11 @@
   @keyframes wave{0%{width:16px;height:16px;opacity:.9}100%{width:120px;height:120px;opacity:0}}
 </style>
 </head>
-<header><a href="explore/map.html">Map</a></header>
-<script>
-(function(){
-  var a=document.getElementById('backHome'); if(!a) return;
-  var parts=location.pathname.replace(/\/+$/,'').split('/').filter(Boolean);
-  var isGH=location.hostname.endsWith('github.io');
-  // 如果是子路径托管（GH Pages 或 Netlify 子目录），用相对地址
-  if (isGH || parts.length>=2) a.href='./index.html';
-})();
-</script>
+<body>
+<a id="backHome" class="back-home" href="/">← 返回宇宙入口</a>
+<div class="title">Dodva · 我们的灯塔 ✨</div>
+<div id="map"></div>
+<div id="status" class="status">加载中…</div>
 
 <!-- Dodva 跨页播放器（会恢复上次场景；首次任意点击后继续播） -->
 <script src="assets/js/dodva-audio.js"></script>
@@ -100,13 +95,11 @@ const path = L.polyline(Object.keys(LIGHTS).map(k=>[LIGHTS[k].lat,LIGHTS[k].lng]
 L.polyline(path.getLatLngs(),{color:'#ff66b3',weight:8,opacity:.25}).addTo(map);
 
 map.on('dblclick', e=>{
-const s = `📍 双击坐标\nLat ${e.latlng.lat.toFixed(6)}, Lng ${e.latlng.lng.toFixed(6)}`;
-document.getElementById('status').textContent = s;
+  const s = `📍 双击坐标\nLat ${e.latlng.lat.toFixed(6)}, Lng ${e.latlng.lng.toFixed(6)}`;
+  document.getElementById('status').textContent = s;
 });
 document.getElementById('status').textContent = '双击地图可复制坐标，替换成我们的私密地点 💞';
 </script>
-
-<!-- 跨页面白噪音播放器 -->
 <script src="/assets/js/dodva-audio.js"></script>
 <script>
   DodvaAudio.init({ dock: true });
