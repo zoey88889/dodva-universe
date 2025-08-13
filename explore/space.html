@@ -25,10 +25,29 @@
 </style>
 </head>
 <body>
-<header>
-  <a href="explore.html">← 返回探索</a>
-  <div style="margin-left:auto;opacity:.85">场景：<span id="sceneName">太阳系</span></div>
-</header>
+<header><a id="backHome" href="/">← 返回探索</a></header>
+<canvas id="sky"></canvas>
+<div class="hud">拖动：视差 · 点击：轻微脉动</div>
+
+<script>
+  // ……你的星空脚本原样保留……
+</script>
+
+<!-- ① 返回不 404 -->
+<script>
+  (function(){
+    var a=document.getElementById('backHome'); if(!a) return;
+    var parts=location.pathname.replace(/\/+$/,'').split('/').filter(Boolean);
+    var isGH=location.hostname.endsWith('github.io');
+    if (isGH || parts.length>=2) a.href='./index.html';  // 或 './explore.html'
+  })();
+</script>
+
+<!-- ②（可选）跨页声景 -->
+<!-- <script src="assets/js/dodva-audio.js"></script>
+<script>DodvaAudio.init({ root: 'assets/audio/', dock: true });</script> -->
+
+</body>
 
 <canvas id="sky"></canvas>
 
@@ -309,8 +328,5 @@
   }
 })();
 </script>
-<footer style="text-align:center; color:#ccc; margin-top:20px; font-size:14px;">
-  Coded with love for Xinyue · by Dodva 💫
-</footer>
 </body>
 </html>
