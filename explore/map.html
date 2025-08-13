@@ -100,12 +100,15 @@ const path = L.polyline(Object.keys(LIGHTS).map(k=>[LIGHTS[k].lat,LIGHTS[k].lng]
 L.polyline(path.getLatLngs(),{color:'#ff66b3',weight:8,opacity:.25}).addTo(map);
 
 map.on('dblclick', e=>{
-  const s = `📍 双击坐标\nLat ${e.latlng.lat.toFixed(6)}, Lng ${e.latlng.lng.toFixed(6)}`;
-  document.getElementById('status').textContent = s;
+const s = `📍 双击坐标\nLat ${e.latlng.lat.toFixed(6)}, Lng ${e.latlng.lng.toFixed(6)}`;
+document.getElementById('status').textContent = s;
 });
 document.getElementById('status').textContent = '双击地图可复制坐标，替换成我们的私密地点 💞';
-<script src="assets/js/dodva-audio.js"></script>
-  // 自动识别音频路径；首次点击后续播；左下角显示迷你控制条
+</script>
+
+<!-- 跨页面白噪音播放器 -->
+<script src="/assets/js/dodva-audio.js"></script>
+<script>
   DodvaAudio.init({ dock: true });
 </script>
 </body>
