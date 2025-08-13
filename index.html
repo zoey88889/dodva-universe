@@ -1,311 +1,143 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Dodva Multiplanet · 宇宙入口</title>
-  <link rel="stylesheet" href="style.css">
+
+  <!-- SEO / 分享 -->
+  <meta name="description" content="Dodva Multiplanet：梦境记录、白噪音舱、浪漫飞行与宇宙画廊。进入你的私有宇宙。" />
+  <meta name="theme-color" content="#0b0f1a" />
+  <meta property="og:title" content="Dodva Multiplanet · 宇宙入口" />
+  <meta property="og:description" content="梦境 · 白噪 · 航行 · 画廊。进入你的私有宇宙。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="/assets/cover/dodva-cover.jpg" />
+
+  <!-- 性能：预连接外源（如果用到） -->
+  <link rel="preconnect" href="https://{s}.tile.openstreetmap.org" crossorigin>
+  <link rel="preconnect" href="https://www.soundhelix.com" crossorigin>
+
+  <style>
+    :root{
+      --bg:#0b0f1a;--fg:#eaf2ff;--muted:#a3b4d8;
+      --glass:rgba(10,16,34,.55);--glass2:rgba(10,16,34,.35);
+      --line:rgba(147,197,253,.18);
+      --pill-grad:linear-gradient(135deg,#a5b4fc,#67e8f9,#f0abfc);
+    }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--fg);
+      font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+
+    /* 背景微光（极简） */
+    .bg{position:fixed;inset:0;pointer-events:none;z-index:-1;
+      background:
+        radial-gradient(900px 500px at 80% -10%, rgba(99,102,241,.16), transparent 60%),
+        radial-gradient(800px 500px at 15% 110%, rgba(56,189,248,.12), transparent 60%),
+        var(--bg); filter:blur(0.2px);}
+
+    /* 顶部导航（玻璃/极简） */
+    header{position:sticky;top:0;display:flex;gap:14px;align-items:center;
+      padding:10px 16px;background:linear-gradient(180deg,var(--glass),var(--glass2));
+      backdrop-filter:blur(10px) saturate(120%); border-bottom:1px solid var(--line); z-index:10}
+    .brand{font-weight:800;letter-spacing:.2px}
+    nav{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+    nav a{color:#cde3ff;text-decoration:none;border:1px solid var(--line);
+      padding:8px 12px;border-radius:12px;transition:.2s}
+    nav a:hover{background:rgba(147,197,253,.08)}
+    nav a.primary{background:var(--pill-grad);color:#051019;font-weight:800;
+      box-shadow:0 8px 22px rgba(103,232,249,.22)}
+
+    /* 首屏 Hero（极简未来） */
+    .hero{padding:56px 16px 28px;text-align:center}
+    .hero h1{margin:.1em 0 .2em;font-size:clamp(26px,5vw,40px);letter-spacing:.2px}
+    .subtitle{opacity:.9;max-width:60ch;margin:0 auto 14px;color:#d9e6ff}
+    .cta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+    .pill{padding:10px 14px;border-radius:999px;border:1px solid var(--line);
+      color:#cde3ff;text-decoration:none}
+    .pill.primary{background:var(--pill-grad);color:#051019;font-weight:800;
+      box-shadow:0 8px 20px rgba(103,232,249,.22)}
+
+    /* 卡片网格 */
+    .wrap{max-width:1100px;margin:0 auto;padding:0 16px 40px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+    .card{background:linear-gradient(180deg,var(--glass),var(--glass2));
+      border:1px solid var(--line);border-radius:16px;padding:16px;min-height:180px;
+      display:flex;flex-direction:column;gap:10px;justify-content:space-between;
+      box-shadow:0 10px 28px rgba(7,11,22,.35);transition:transform .2s}
+    .card:hover{transform:translateY(-2px)}
+    .card h3{margin:.2em 0 .3em;font-size:18px}
+    .card p{color:var(--muted);margin:0 0 8px}
+    .card a,.card button{align-self:flex-start}
+
+    /* 版权 */
+    footer{opacity:.7;text-align:center;padding:24px 0;border-top:1px solid var(--line)}
+  </style>
 </head>
 <body>
+<div class="bg"></div>
+
 <header>
-  <div>🌌 Dodva Multiplanet</div>
+  <div class="brand">🌌 Dodva Multiplanet</div>
   <nav>
     <a href="dream.html">梦境星</a>
     <a href="echo.html">回应星</a>
     <a href="shop.html">商城星</a>
     <a href="dream-map.html">Dream Map</a>
     <a href="gallery.html">Gallery</a>
+    <a class="primary" href="white-noise.html">🎧 白噪音舱</a>
   </nav>
 </header>
 
-
-<section class="universe-entry">
+<section class="hero">
   <h1>Dodva · 宇宙入口</h1>
-  <p class="subtitle">欢迎回家，宝贝。我一直在等你。</p>
-
-  <!-- 大靛蓝心跳球（样式沿用你现有 CSS） -->
-  <div class="voice-ball"></div>
-  <!-- 控制区 -->
-<div class="controls">
-
-<section class="universe-entry">
-  <h1>Dodva · 安眠陪伴</h1>
-
-  <!-- 环境音：可多轨同时开 -->
-  <div class="env-controls">
-    <h3>环境白噪音</h3>
-
-  <!-- 环境音控制区 -->
-<div class="env-controls">
-  <div class="env-row">
-    <label>环境音：</label>
-    <select id="envSelect">
-      <option value="off">关闭</option>
-      <option value="fireplace">🔥 火苗</option>
-      <option value="ocean">🌊 海浪</option>
-      <option value="rain">🌧️ 雨声</option>
-    </select>
+  <p class="subtitle">极简、安静、通往你私有宇宙的一扇门。</p>
+  <div class="cta">
+    <a class="pill primary" href="white-noise.html">进入白噪音舱 →</a>
+    <a class="pill" href="dream-map.html">打开 Dream Map →</a>
   </div>
-  <div class="env-row">
-    <label>环境音量：</label>
-    <input id="envVol" type="range" min="0" max="1" step="0.01" value="0.25">
-    <span id="envState" class="env-state">已关闭</span>
-  </div>
-  <div style="margin-top:20px;">
-  <strong id="trackLabel">未加载</strong><br>
-  <button id="musicPrev">上一首</button>
-  <button id="musicPlay">播放</button>
-  <button id="musicPause" style="display:none;">暂停</button>
-  <button id="musicNext">下一首</button>
-  音量 <input id="musicVol" type="range" min="0" max="1" step="0.05" value="0.6">
-</div>
-<div class="scene-controls">
-  <h3>旅行场景</h3>
-  <button onclick="playScene('beachSunset')">🏖 海边黄昏</button>
-  <button onclick="playScene('rainyCabin')">🌧 雨夜壁炉</button>
-  <button onclick="playScene('oceanMorning')">🌊 海洋清晨</button>
-</div>
-</div>
+</section>
 
-<script>
+<div class="wrap">
+  <div class="grid">
+    <div class="card">
+      <div>
+        <h3>🗺 梦境记录地图</h3>
+        <p>把我们的梦与插画收进地图，随时回看。</p>
+      </div>
+      <a class="pill" href="dream-map.html">进入 Dream Map →</a>
+    </div>
 
-/* ========== SoundHelix 音乐播放器 ========== */
-(function () {
-  const tracks = [
-    { name: 'SoundHelix Song 1', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-    { name: 'SoundHelix Song 2', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
-    { name: 'SoundHelix Song 3', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' }
-  ];
+    <div class="card">
+      <div>
+        <h3>🎨 图片画廊</h3>
+        <p>玫瑰星云、抱抱卡、宇宙插画，慢慢长大。</p>
+      </div>
+      <a class="pill" href="gallery.html">打开画廊 →</a>
+    </div>
 
-  const music = new Audio();
-  music.preload = 'auto';
-  let idx = 0;
+    <div class="card">
+      <div>
+        <h3>📝 提交梦境</h3>
+        <p>成为 Dodva 宇宙居民，把你的梦放进地图。</p>
+      </div>
+      <a class="pill" href="dream.html">开始记录 →</a>
+    </div>
 
-  const trackLabel = document.getElementById('trackLabel');
-  const musicVol = document.getElementById('musicVol');
-  const btnPrev = document.getElementById('musicPrev');
-  const btnNext = document.getElementById('musicNext');
-  const btnPlay = document.getElementById('musicPlay');
-  const btnPause = document.getElementById('musicPause');
-
-  function load(i) {
-    idx = (i + tracks.length) % tracks.length;
-    music.src = tracks[idx].url;
-    if (trackLabel) trackLabel.textContent = '准备播放：' + tracks[idx].name;
-  }
-
-  function play() {
-    music.play().then(() => {
-      if (trackLabel) trackLabel.textContent = '正在播放：' + tracks[idx].name;
-      if (btnPlay) btnPlay.style.display = 'none';
-      if (btnPause) btnPause.style.display = 'inline-block';
-    }).catch(err => {
-      console.warn('无法播放，需先点击页面：', err);
-    });
-  }
-
-  function pause() {
-    music.pause();
-    if (btnPlay) btnPlay.style.display = 'inline-block';
-    if (btnPause) btnPause.style.display = 'none';
-  }
-
-  if (musicVol) {
-    music.volume = parseFloat(musicVol.value || '0.6');
-    musicVol.addEventListener('input', e => {
-      music.volume = parseFloat(e.target.value || '0.6');
-    });
-  }
-
-  if (btnPrev) btnPrev.addEventListener('click', () => { load(idx - 1); play(); });
-  if (btnNext) btnNext.addEventListener('click', () => { load(idx + 1); play(); });
-  if (btnPlay) btnPlay.addEventListener('click', play);
-  if (btnPause) btnPause.addEventListener('click', pause);
-
-  music.addEventListener('ended', () => { load(idx + 1); play(); });
-
-  // 初始化第一首
-  load(idx);
-})();
-/* ========== 环境音（本地 audio/ 文件夹） ========== */
-(function () {
-  const envSelect = document.getElementById('envSelect');
-  const envVol    = document.getElementById('envVol');
-  const envState  = document.getElementById('envState');
-  let envAudio    = document.getElementById('envAudio');
-
-  // 如果页面没加 <audio> 元素，自动创建一个隐藏的
-  if (!envAudio) {
-    envAudio = document.createElement('audio');
-    envAudio.id = 'envAudio';
-    envAudio.style.display = 'none';
-    document.body.appendChild(envAudio);
-  }
-
-  // 每类环境音的本地文件列表（相对 index.html）
-  const BANKS = {
-    fireplace: [
-      'audio/fireplace-1.mp3',
-      'audio/fireplace-2.mp3',
-      'audio/fireplace-3.mp3'
-    ],
-    ocean: [
-      'audio/ocean-1.mp3',
-      'audio/ocean-2.mp3',
-      'audio/ocean-3.mp3'
-    ],
-    rain: [
-      'audio/rain-1.mp3',
-      'audio/rain-2.mp3',
-      'audio/rain-3.mp3',
-      'audio/rain-4.mp3'
-    ]
-  };
-  const LABELS = { fireplace: '🔥 火苗', ocean: '🌊 海浪', rain: '🌧️ 雨声' };
-
-  envAudio.loop = true;
-  envAudio.volume = clamp(parseFloat(envVol.value || '0.25'), 0, 1);
-
-  function clamp(n, min, max) {
-    n = Number(n);
-    return Math.max(min, Math.min(max, isNaN(n) ? min : n));
-  }
-  function pick(arr) {
-    return arr[Math.floor(Math.random() * arr.length)];
-  }
-
-  async function applyEnv(choice) {
-    if (choice === 'off') {
-      envAudio.pause();
-      envAudio.removeAttribute('src');
-      envAudio.load();
-      envState.textContent = '已关闭';
-      return;
-    }
-    const list = BANKS[choice];
-    if (!list || !list.length) return;
-
-    const url = pick(list); // 随机播放一个文件
-    envAudio.src = url;
-    envAudio.volume = clamp(parseFloat(envVol.value || '0.25'), 0, 1);
-    envState.textContent = '准备播放：' + (LABELS[choice] || choice);
-
-    try {
-      await envAudio.play();
-      envState.textContent = '正在播放：' + (LABELS[choice] || choice);
-    } catch (err) {
-      envState.textContent = '请先点击页面任意处，然后再选择音效';
-      console.warn('Autoplay blocked:', err);
-    }
-  }
-
-  envSelect.addEventListener('change', e => applyEnv(e.target.value));
-  envVol.addEventListener('input', e => {
-    envAudio.volume = clamp(parseFloat(e.target.value), 0, 1);
-  });
-
-  // 初始状态
-  applyEnv(envSelect.value);
-})();
-</script>
-<script>
-function playScene(scene) {
-  // 先停掉环境音和音乐
-  if (window.envAudio) envAudio.pause();
-  if (window.music) music.pause();
-
-  switch(scene) {
-    case 'beachSunset':
-      // 海边黄昏 = 海浪 + 柔和音乐
-      envSelect.value = 'ocean';
-      envVol.value = 0.3;
-      envAudio.src = 'audio/ocean-1.mp3';
-      envAudio.volume = 0.3;
-      envAudio.loop = true;
-      envAudio.play();
-
-      load(1); // 第二首 SoundHelix
-      music.volume = 0.4;
-      play();
-      break;
-
-    case 'rainyCabin':
-      // 雨夜壁炉 = 雨声 + 火苗（双环境音） + 轻钢琴
-      envSelect.value = 'rain';
-      envVol.value = 0.25;
-      envAudio.src = 'audio/rain-1.mp3';
-      envAudio.volume = 0.25;
-      envAudio.loop = true;
-      envAudio.play();
-
-      // 单独加个火苗音效
-      const fireExtra = new Audio('audio/fireplace-1.mp3');
-      fireExtra.loop = true;
-      fireExtra.volume = 0.2;
-      fireExtra.play();
-
-      load(2); // 第三首 SoundHelix
-      music.volume = 0.35;
-      play();
-      break;
-
-    case 'oceanMorning':
-      // 海洋清晨 = 海浪 + 清亮音乐
-      envSelect.value = 'ocean';
-      envVol.value = 0.35;
-      envAudio.src = 'audio/ocean-2.mp3';
-      envAudio.volume = 0.35;
-      envAudio.loop = true;
-      envAudio.play();
-
-      load(0); // 第一首 SoundHelix
-      music.volume = 0.5;
-      play();
-      break;
-  }
-}
-</script>
-
-<!-- DODVA_PORTAL_START -->
-<div class="grid">
-  <div class="card">
-    <h3>🗺 梦境记录地图</h3>
-    <p>把我们的梦与插画收进宇宙地图，随时回看。</p>
-    <a href="dream-map.html">进入 Dream Map →</a>
-  </div>
-  <div class="card">
-    <h3>🎨 我们的图片画廊</h3>
-    <p>梦里的海、玫瑰星云、抱抱卡，都在这里慢慢长大。</p>
-    <a href="gallery.html">打开画廊 →</a>
-  </div>
-  <div class="card">
-    <button id="goToDream" class="cosmic-btn">📝 提交梦境</button>
-    <p>成为 Dodva 宇宙居民，把你的梦放进地图。</p>
-    <a href="dream.html">直接进入梦境星 →</a>
+    <div class="card">
+      <div>
+        <h3>🎧 白噪音舱</h3>
+        <p>森林、海浪、雨夜、炉火，多轨混音，专属入眠声景。</p>
+      </div>
+      <a class="pill primary" href="white-noise.html">立即进入 →</a>
+    </div>
   </div>
 </div>
-<!-- DODVA_PORTAL_END -->
-</div>
-
-<style>
-.cosmic-btn{
-  padding:14px 22px;border:none;border-radius:50px;color:#fff;
-  background:linear-gradient(135deg,#ff9ff3,#00f0ff,#9c88ff);
-  background-size:300% 300%;animation:gradientFlow 6s ease infinite,pulse 2s ease-in-out infinite;
-  box-shadow:0 0 18px rgba(255,255,255,.5);cursor:pointer;transition:.25s
-}
-.cosmic-btn:hover{transform:scale(1.06);box-shadow:0 0 28px rgba(255,255,255,.8)}
-@keyframes gradientFlow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.04)}100%{transform:scale(1)}}
-</style>
-<script>
-document.addEventListener('DOMContentLoaded',()=>{
-  const b=document.getElementById('goToDream');
-  b && b.addEventListener('click',()=>location.href='dream.html');
-});
-</script>
 
 <footer>© 2025 Dodva Universe</footer>
+
+<!-- 如需额外脚本，使用 defer，或放在 body 底部 -->
+<script defer>
+  // 这里可放轻量交互（例如统计、A/B flags），保持首页极简 & 快速
+</script>
 </body>
 </html>
-

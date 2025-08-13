@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Dodva · 探索</title>
+<meta name="theme-color" content="#0b0f1a">
+<style>
+  :root{--bg:#0b0f1a;--fg:#eaf2ff;--muted:#a3b4d8;--line:rgba(147,197,253,.18);
+        --pill:linear-gradient(135deg,#a5b4fc,#67e8f9,#f0abfc)}
+  *{box-sizing:border-box} html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  header{position:sticky;top:0;display:flex;gap:10px;align-items:center;
+    padding:10px 16px;background:linear-gradient(180deg,rgba(10,16,34,.55),rgba(10,16,34,.35));
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  header a{color:#cde3ff;text-decoration:none;border:1px solid var(--line);
+    padding:8px 12px;border-radius:12px}
+  .wrap{max-width:1100px;margin:0 auto;padding:24px 16px 40px}
+  h1{margin:.1em 0 .4em}
+  p.sub{opacity:.9;color:#d9e6ff;margin:.2em 0 1em}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+  .card{position:relative;border:1px solid var(--line);border-radius:16px;overflow:hidden;
+    background:linear-gradient(180deg,rgba(10,16,34,.55),rgba(10,16,34,.35));min-height:220px;
+    display:flex;flex-direction:column;justify-content:flex-end;box-shadow:0 10px 28px rgba(7,11,22,.35)}
+  .card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.35}
+  .card .body{position:relative;padding:16px}
+  .card h3{margin:.2em 0 .3em}
+  .card p{margin:0 0 10px;color:var(--muted)}
+  .pill{display:inline-block;padding:10px 14px;border-radius:999px;border:1px solid var(--line);
+    color:#cde3ff;text-decoration:none;background:transparent}
+  .pill.primary{background:var(--pill);color:#051019;font-weight:800;box-shadow:0 8px 20px rgba(103,232,249,.22)}
+</style>
+</head>
+<body>
+<header>
+  <a href="index.html">← 返回宇宙入口</a>
+  <div style="margin-left:auto;opacity:.85">Dodva · 探索</div>
+</header>
+
+<div class="wrap">
+  <h1>探索</h1>
+  <p class="sub">选择一个维度进入：地图足迹，或太空航行。</p>
+
+  <div class="grid">
+    <article class="card">
+      <img src="assets/img/cover-map.jpg" alt="" loading="lazy">
+      <div class="body">
+        <h3>LEAF 地图</h3>
+        <p>私密坐标与心动轨迹，轻盈、纯净。</p>
+        <a class="pill primary" href="explore-map.html" aria-label="进入 LEAF 地图">进入 →</a>
+      </div>
+    </article>
+
+    <article class="card">
+      <img src="assets/img/cover-space.jpg" alt="" loading="lazy">
+      <div class="body">
+        <h3>太空探索</h3>
+        <p>极简星海与缓慢星流，安静、深呼吸。</p>
+        <a class="pill" href="explore-space.html" aria-label="进入太空探索">进入 →</a>
+      </div>
+    </article>
+  </div>
+</div>
+</body>
+</html>
