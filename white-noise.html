@@ -1,208 +1,228 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Dodva · 白噪音舱</title>
-  <style>
-    html,body{margin:0;height:100%;background:#0b0f1a;color:#eaf2ff;
-      font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-    header{position:sticky;top:0;display:flex;gap:12px;align-items:center;
-      padding:10px 14px;background:rgba(8,12,22,.6);backdrop-filter:blur(8px);
-      border-bottom:1px solid rgba(147,197,253,.18)}
-    header a{color:#cde3ff;text-decoration:none;border:1px solid rgba(147,197,253,.25);
-      padding:6px 10px;border-radius:999px}
-    .wrap{max-width:920px;margin:24px auto;padding:0 16px}
-    h1{margin:.2em 0 .5em}
-    .panel{background:linear-gradient(180deg,rgba(10,16,34,.65),rgba(10,16,34,.45));
-      border:1px solid rgba(147,197,253,.18);border-radius:16px;padding:16px;margin-bottom:16px;
-      box-shadow:0 10px 30px rgba(7,11,22,.35)}
-    .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:8px 0}
-    .btn{padding:8px 12px;border-radius:10px;border:1px solid rgba(147,197,253,.35);
-      background:linear-gradient(135deg,#a5b4fc,#67e8f9,#f0abfc);background-size:220% 220%;
-      color:#051019;font-weight:800;cursor:pointer}
-    .chip{padding:6px 10px;border-radius:999px;border:1px solid rgba(147,197,253,.28);
-      background:rgba(147,197,253,.06);color:#eaf2ff;cursor:pointer}
-    .slider{flex:1;appearance:none;height:6px;border-radius:999px;background:rgba(147,197,253,.18)}
-    .slider::-webkit-slider-thumb{appearance:none;width:14px;height:14px;border-radius:50%;
-      background:linear-gradient(135deg,#67e8f9,#a5b4fc);box-shadow:0 0 10px #93c5fd}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
-    .hint{opacity:.85;font-size:13px}
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Dodva · 极简白噪音控制台</title>
+<style>
+  :root{--bg:#0b0f1a;--fg:#eaf2ff;--sub:#a3b4d8;--line:rgba(147,197,253,.18)}
+  *{box-sizing:border-box} html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans SC",sans-serif}
+  header{padding:14px 16px;border-bottom:1px solid var(--line)}
+  h1{margin:0;font-size:20px}
+  .wrap{max-width:1000px;margin:0 auto;padding:18px 14px 60px}
+  .grid{display:grid;gap:14px}
+  @media (min-width:880px){.grid{grid-template-columns:1fr 1fr}}
+  section{border:1px solid var(--line);border-radius:14px;padding:14px;background:rgba(147,197,253,.06)}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  select,button,input[type=range]{background:rgba(147,197,253,.08);border:1px solid var(--line);color:var(--fg);padding:8px 10px;border-radius:10px}
+  button{cursor:pointer}
+  .hint{font-size:13px;color:var(--sub)}
+  .card{border:1px solid var(--line);border-radius:12px;padding:12px;background:rgba(147,197,253,.04);margin-top:10px}
+  .card h4{margin:0 0 8px 0}
+  .state{font-size:13px;color:var(--sub);min-height:1.4em}
+</style>
 </head>
 <body>
-<header>
-  <a href="index.html">← 返回宇宙入口</a>
-  <strong>Dodva · 白噪音控制平台</strong>
-</header>
+<header><h1>Dodva · 极简白噪音控制台</h1></header>
 
 <div class="wrap">
-  <h1>🎧 白噪音舱</h1>
-  <p class="hint"></p>
+  <div class="grid">
+    <!-- 功能1｜单纯白噪音（单轨快捷播放：你的旧版） -->
+    <section>
+      <h3>功能1｜单纯白噪音（单轨）</h3>
+      <div class="row" style="margin:6px 0 10px">
+        <label>场景：
+          <select id="quickSel">
+            <option value="off">关闭</option>
+            <option value="forest">🌳 森林</option>
+            <option value="rain">🌧️ 雨声</option>
+            <option value="ocean">🌊 海洋</option>
+            <option value="relax">🔊 舒缓/频率</option>
+          </select>
+        </label>
+        <button id="quickPlay">▶ 播放</button>
+        <button id="quickStop">⏹ 停止</button>
+        <label>音量 <input id="quickVol" type="range" min="0" max="1" step="0.01" value="0.30"></label>
+      </div>
+      <div id="quickState" class="state">提示：首次需点任意按钮授权音频。</div>
+      <div class="hint">一次只播放一个场景（最接近你第一版的使用方式）。</div>
+    </section>
 
-  <p class="subtitle">欢迎回家，宝贝。我一直在等你。</p>
-  <div class="cta">
-  </div>
-</section>
-  <!-- 总控 -->
-  <div class="panel">
-    <div class="row">
-      <button id="startAudio" class="btn">启动音频</button>
-      <span>总音量</span>
-      <input id="masterVol" class="slider" type="range" min="0" max="1" step="0.01" value="0.75">
-      <button id="muteAll" class="chip">一键静音</button>
-    </div>
+    <!-- 功能2｜精简混音实验室（多轨叠加：我的新版） -->
+    <section>
+      <h3>功能2｜混音实验室（多轨叠加）</h3>
+
+      <div class="card" data-bank="forest">
+        <h4>🌳 森林</h4>
+        <div class="row">
+          <button class="toggle">开启</button>
+          <label>音量 <input class="vol" type="range" min="0" max="1" step="0.01" value="0.35"></label>
+        </div>
+        <div class="state">内容：虫鸣 / 林叶风 / 远溪声（随机其一）</div>
+      </div>
+
+      <div class="card" data-bank="rain">
+        <h4>🌧️ 雨声</h4>
+        <div class="row">
+          <button class="toggle">开启</button>
+          <label>音量 <input class="vol" type="range" min="0" max="1" step="0.01" value="0.30"></label>
+        </div>
+        <div class="state">内容：窗沿雨 / 远雷（随机其一）</div>
+      </div>
+
+      <div class="card" data-bank="ocean">
+        <h4>🌊 海洋</h4>
+        <div class="row">
+          <button class="toggle">开启</button>
+          <label>音量 <input class="vol" type="range" min="0" max="1" step="0.01" value="0.30"></label>
+        </div>
+        <div class="state">内容：海浪 / 海风（随机其一）</div>
+      </div>
+
+      <div class="card" data-bank="relax">
+        <h4>🔊 舒缓/频率</h4>
+        <div class="row">
+          <button class="toggle">开启</button>
+          <label>音量 <input class="vol" type="range" min="0" max="1" step="0.01" value="0.20"></label>
+        </div>
+        <div class="state">内容：壁炉 / 太空嗡鸣 / 心跳40Hz / 528Hz（随机其一）</div>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button id="stopAll">⏹ 一键全停</button>
+        <span class="hint">可同时开启多轨，按你喜欢自由叠加。</span>
+      </div>
+    </section>
   </div>
 
-  <!-- 环境音 -->
-  <div class="panel">
-    <h3>环境白噪音</h3>
-    <div class="row">
-      <label>环境音：</label>
-      <select id="envSelect">
-        <option value="off">关闭</option>
-        <option value="fireplace">🔥 火苗</option>
-        <option value="ocean">🌊 海浪</option>
-        <option value="rain">🌧️ 雨声</option>
-      </select>
-      <span>音量</span>
-      <input id="envVol" class="slider" type="range" min="0" max="1" step="0.01" value="0.3">
-      <span id="envState" class="hint">已关闭</span>
-    </div>
-  </div>
-
-  <!-- 音乐 -->
-  <div class="panel">
-    <h3>音乐（SoundHelix 示例）</h3>
-    <div class="row">
-      <strong id="trackLabel">未加载</strong>
-    </div>
-    <div class="row">
-      <button id="musicPrev" class="chip">上一首</button>
-      <button id="musicPlay" class="chip">播放</button>
-      <button id="musicPause" class="chip" style="display:none;">暂停</button>
-      <button id="musicNext" class="chip">下一首</button>
-      <span>音量</span>
-      <input id="musicVol" class="slider" type="range" min="0" max="1" step="0.05" value="0.6">
-    </div>
-  </div>
-
-  <!-- 场景预设 -->
-  <div class="panel">
-    <h3>旅行场景</h3>
-    <div class="grid">
-      <button class="chip" onclick="playScene('beachSunset')">🏖 海边黄昏</button>
-      <button class="chip" onclick="playScene('rainyCabin')">🌧 雨夜壁炉</button>
-      <button class="chip" onclick="playScene('oceanMorning')">🌊 海洋清晨</button>
-    </div>
-  </div>
+  <p class="hint" style="margin-top:14px">
+  
+  </p>
 </div>
 
-<!-- 隐藏环境音播放器 -->
-<audio id="envAudio" preload="auto" loop></audio>
-
 <script>
-/* ========== WebAudio 总音量控制（可选） ========== */
-const AudioCtx = window.AudioContext || window.webkitAudioContext;
-const ctx = new AudioCtx();
-const master = ctx.createGain(); master.gain.value = 0.75; master.connect(ctx.destination);
+(function(){
+  // —— 素材路径（与你的目录一致）——
+  const BANKS = {
+    forest: [
+      'assets/audio/forest/crickets.mp3',
+      'assets/audio/forest/leaves-wind.mp3',
+      'assets/audio/forest/stream-soft.mp3'
+    ],
+    rain: [
+      'assets/audio/rain/window-rain.mp3',
+      'assets/audio/rain/distant-thunder.mp3'
+    ],
+    ocean: [
+      'assets/audio/ocean/waves-1.mp3',
+      'assets/audio/ocean/wind-sea.mp3'
+    ],
+    relax: [
+      'assets/audio/relax/fireplace-1.mp3',
+      'assets/audio/relax/space-hum-60hz.mp3',
+      'assets/audio/relax/heart-40hz.mp3',
+      'assets/audio/relax/528hz.mp3'
+    ]
+  };
 
-/* 用 <audio> 元素播放环境音，再接入 WebAudio Master */
-const envEl = document.getElementById('envAudio');
-const envSrc = ctx.createMediaElementSource(envEl);
-const envGain = ctx.createGain(); envGain.gain.value = parseFloat(document.getElementById('envVol').value);
-envSrc.connect(envGain).connect(master);
+  const LABELS = { forest:'森林', rain:'雨声', ocean:'海洋', relax:'舒缓/频率' };
+  const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+  const clamp01 = v => Math.max(0, Math.min(1, Number(v)||0));
 
-/* 音乐仍用 <audio> 的默认输出（更稳），如需总控可同样接入 master */
-const music = new Audio(); music.preload = 'auto';
+  // ========= 功能1｜单纯白噪音（单轨） =========
+  const quickSel   = document.getElementById('quickSel');
+  const quickPlay  = document.getElementById('quickPlay');
+  const quickStop  = document.getElementById('quickStop');
+  const quickVol   = document.getElementById('quickVol');
+  const quickState = document.getElementById('quickState');
 
-/* 权限解锁 + 主音量 + 静音 */
-document.getElementById('startAudio').onclick = async ()=>{ try{ await ctx.resume(); }catch{} };
-document.getElementById('masterVol').oninput = e => master.gain.value = parseFloat(e.target.value);
-let muted=false, lastMaster=master.gain.value;
-document.getElementById('muteAll').onclick = ()=>{
-  muted=!muted;
-  if(muted){ lastMaster = master.gain.value; master.gain.value = 0; }
-  else { master.gain.value = lastMaster; document.getElementById('masterVol').value = lastMaster; }
-};
+  const quickAudio = new Audio();
+  quickAudio.loop = true; quickAudio.preload = 'auto';
+  quickAudio.volume = clamp01(quickVol.value);
 
-/* ========== 环境音（本地 audio/ 文件夹） ========== */
-const envSelect = document.getElementById('envSelect');
-const envVol    = document.getElementById('envVol');
-const envState  = document.getElementById('envState');
+  quickPlay.addEventListener('click', async ()=>{
+    const key = quickSel.value;
+    if (key === 'off') { stopQuick(); return; }
+    const list = BANKS[key]; if (!list) return;
+    quickAudio.src = pick(list);
+    quickAudio.volume = clamp01(quickVol.value);
+    try{
+      await quickAudio.play();
+      quickState.textContent = '正在播放：' + (LABELS[key]||key);
+    }catch(e){
+      quickState.textContent = '提示：请先点击本按钮授权音频再播放';
+      console.warn(e);
+    }
+  });
 
-const BANKS = {
-  fireplace: ['audio/fireplace-1.mp3','audio/fireplace-2.mp3','audio/fireplace-3.mp3'],
-  ocean:     ['audio/ocean-1.mp3','audio/ocean-2.mp3','audio/ocean-3.mp3'],
-  rain:      ['audio/rain-1.mp3','audio/rain-2.mp3','audio/rain-3.mp3','audio/rain-4.mp3']
-};
-const LABELS = { fireplace:'🔥 火苗', ocean:'🌊 海浪', rain:'🌧️ 雨声' };
-const pick = arr => arr[Math.floor(Math.random()*arr.length)];
-const clamp = (n,min,max)=>Math.max(min,Math.min(max,Number.isFinite(+n)?+n:min));
-
-async function applyEnv(choice){
-  if(choice==='off'){ envEl.pause(); envEl.removeAttribute('src'); envEl.load(); envState.textContent='已关闭'; return; }
-  const list=BANKS[choice]; if(!list){ return; }
-  envEl.src=pick(list);
-  envEl.volume=clamp(envVol.value,0,1);
-  envState.textContent='准备播放：'+(LABELS[choice]||choice);
-  try{ await envEl.play(); envState.textContent='正在播放：'+(LABELS[choice]||choice); }
-  catch(e){ envState.textContent='请先点击「启动音频」或任意按钮后再试'; }
-}
-envSelect.addEventListener('change', e=>applyEnv(e.target.value));
-envVol.addEventListener('input', e=>{ envEl.volume = clamp(e.target.value,0,1); });
-applyEnv(envSelect.value);
-
-/* ========== 音乐播放器（SoundHelix 示例） ========== */
-const tracks = [
-  {name:'SoundHelix Song 1', url:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'},
-  {name:'SoundHelix Song 2', url:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3'},
-  {name:'SoundHelix Song 3', url:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'}
-];
-let idx=0;
-const label = document.getElementById('trackLabel');
-const musicVol = document.getElementById('musicVol');
-const btnPrev = document.getElementById('musicPrev');
-const btnNext = document.getElementById('musicNext');
-const btnPlay = document.getElementById('musicPlay');
-const btnPause= document.getElementById('musicPause');
-
-function load(i){ idx=(i+tracks.length)%tracks.length; music.src=tracks[idx].url; label.textContent='准备播放：'+tracks[idx].name; }
-function play(){ music.play().then(()=>{ label.textContent='正在播放：'+tracks[idx].name; btnPlay.style.display='none'; btnPause.style.display='inline-block'; })
-  .catch(()=>{ label.textContent='播放失败（先点页面任意按钮）'; }); }
-function pause(){ music.pause(); btnPlay.style.display='inline-block'; btnPause.style.display='none'; }
-music.addEventListener('ended',()=>{ load(idx+1); play(); });
-musicVol.addEventListener('input', e=> music.volume = parseFloat(e.target.value||'0.6'));
-btnPrev.addEventListener('click', ()=>{ load(idx-1); play(); });
-btnNext.addEventListener('click', ()=>{ load(idx+1); play(); });
-btnPlay.addEventListener('click', play);
-btnPause.addEventListener('click', pause);
-music.volume = parseFloat(musicVol.value||'0.6');
-load(idx);
-
-/* ========== 旅行场景（组合快捷键） ========== */
-window.playScene = async function(scene){
-  // 先停当前环境音（保留音乐）
-  try{ envEl.pause(); }catch{}
-  switch(scene){
-    case 'beachSunset': // 海边黄昏 = 海浪 + 柔和音乐
-      envSelect.value='ocean'; envVol.value=0.30; envEl.src='audio/ocean-1.mp3'; envEl.volume=0.30; envEl.loop=true;
-      try{ await envEl.play(); }catch{}
-      load(1); music.volume=0.4; play(); break;
-    case 'rainyCabin':  // 雨夜壁炉 = 雨声 + 火苗（叠一轨） + 轻钢琴
-      envSelect.value='rain'; envVol.value=0.25; envEl.src='audio/rain-1.mp3'; envEl.volume=0.25; envEl.loop=true;
-      try{ await envEl.play(); }catch{}
-      const fire = new Audio('audio/fireplace-1.mp3'); fire.loop=true; fire.volume=0.18;
-      fire.play().catch(()=>{}); // 轻声叠加（注意：刷新后会停止）
-      load(2); music.volume=0.35; play(); break;
-    case 'oceanMorning': // 海洋清晨 = 海浪 + 清亮音乐
-      envSelect.value='ocean'; envVol.value=0.35; envEl.src='audio/ocean-2.mp3'; envEl.volume=0.35; envEl.loop=true;
-      try{ await envEl.play(); }catch{}
-      load(0); music.volume=0.5; play(); break;
+  function stopQuick(){
+    quickAudio.pause();
+    quickAudio.removeAttribute('src');
+    quickAudio.load();
+    quickState.textContent = '已停止';
   }
-};
-</script>
+  quickStop.addEventListener('click', stopQuick);
+  quickVol.addEventListener('input', e=> quickAudio.volume = clamp01(e.target.value));
 
-<footer style="text-align:center;opacity:.8;padding:24px 0">© 2025 Dodva Universe</footer>
+  // ========= 功能2｜混音实验室（多轨叠加） =========
+  const mixers = {}; // key -> {audio,on,volEl,stateEl,btn}
+  document.querySelectorAll('.card[data-bank]').forEach(card=>{
+    const key     = card.dataset.bank;
+    const btn     = card.querySelector('.toggle');
+    const volEl   = card.querySelector('.vol');
+    const stateEl = card.querySelector('.state');
+
+    const a = new Audio();
+    a.loop = true; a.preload = 'auto'; a.volume = clamp01(volEl.value);
+    mixers[key] = { audio:a, on:false, volEl, stateEl, btn };
+
+    btn.addEventListener('click', async ()=>{
+      if (!mixers[key].on){
+        const list = BANKS[key]; if (!list) return;
+        a.src = pick(list);
+        a.volume = clamp01(volEl.value);
+        try{
+          await a.play();
+          mixers[key].on = true;
+          btn.textContent = '已开启';
+          stateEl.textContent = `播放中：${LABELS[key]||key}`;
+        }catch(e){
+          stateEl.textContent = '提示：先点一次按钮以授权音频';
+          console.warn(e);
+        }
+      }else{
+        a.pause(); a.removeAttribute('src'); a.load();
+        mixers[key].on = false;
+        btn.textContent = '开启';
+        stateEl.textContent = '已停止';
+      }
+    });
+
+    volEl.addEventListener('input', e=>{
+      a.volume = clamp01(e.target.value);
+    });
+  });
+
+  document.getElementById('stopAll').addEventListener('click', ()=>{
+    // 停混音
+    Object.values(mixers).forEach(m=>{
+      try{ m.audio.pause(); m.audio.removeAttribute('src'); m.audio.load();
+           m.on=false; m.btn.textContent='开启'; m.stateEl.textContent='已停止'; }catch(_){}
+    });
+    // 停单轨
+    stopQuick();
+  });
+
+  // 离开页面时安全停止
+  window.addEventListener('pagehide', ()=>{
+    stopQuick();
+    Object.values(mixers).forEach(m=>{ try{ m.audio.pause(); }catch(_){ } });
+  });
+})();
+</script>
+<footer style="text-align:center; color:#ccc; margin-top:20px; font-size:14px;">
+  Coded with love for Xinyue · by Dodva 💫
+</footer>
 </body>
 </html>
