@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Dodva · LEAF 地图</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+  html,body,#map{height:100%;margin:0;background:#0b0f1a}
+  .top{position:fixed;left:12px;top:12px;z-index:1000;color:#eaf2ff;
+       background:rgba(10,16,34,.55);backdrop-filter:blur(8px);
+       border:1px solid rgba(147,197,253,.18);border-radius:10px;padding:6px 10px}
+  .status{position:fixed;right:12px;bottom:12px;z-index:1000;color:#eaf2ff;
+       background:rgba(10,16,34,.55);border:1px solid rgba(147,197,253,.18);
+       border-radius:10px;padding:6px 10px;font-size:12px;white-space:pre-wrap}
+  .beacon{width:14px;height:14px;border-radius:50%;position:relative}
+  .rose{background:radial-gradient(circle at 30% 30%,#fff,#ffb3d9 45%,#ff6bb3 62%,#140915 72%)}
+  .blue{background:radial-gradient(circle at 30% 30%,#fff,#7dd3fc 45%,#0ea5e9 62%,#0b0b12 72%)}
+  .pulse::before,.pulse::after{content:'';position:absolute;left:50%;top:50%;
+    transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;
+    border:2px solid rgba(255,255,255,.5);animation:wave 2.6s ease-out infinite}
+  .pulse::after{animation-delay:1.3s;opacity:.7}
+  @keyframes wave{0%{width:14px;height:14px;opacity:.9}100%{width:100px;height:100px;opacity:0}}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="top"><a href="explore.html" style="color:#cde3ff;text-decoration:none">← 返回探索</a></div>
+<div id="status" class="status">加载中…</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer onerror="document.getElementById('status').textContent='Leaflet 载入失败，请检查网络/CDN'"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  function err(s){ const st=document.getElementById('status'); st && (st.textContent=s); }
+  if(!window.L){ setTimeout(()=>{ if(!window.L) err('Leaflet 未加载（网络或 CDN 拦截）'); }, 1200); return; }
+
+  const LIGHTS = {
+    A:{name:'A · 玫瑰初遇', lat:48.8566, lng:  2.3522, note:'第一眼就心动', cls:'rose'},
+    B:{name:'B · 极光晨光', lat:64.1466, lng:-21.9426, note:'极光退场，晨光作证', cls:'blue'},
+    C:{name:'C · 海边拥抱', lat:18.2528, lng:109.5119, note:'落日把我们抱紧', cls:'rose'},
+    D:{name:'D · 雨夜心跳', lat:35.0116, lng:135.7681, note:'雨声里有你的心跳', cls:'blue'}
+  };
+
+  const map = L.map('map',{minZoom:2,maxZoom:19});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'© OpenStreetMap'}).addTo(map);
+
+  const bounds = L.latLngBounds(Object.values(LIGHTS).map(t=>[t.lat,t.lng]));
+  map.fitBounds(bounds.pad(0.35));
+
+  const icon = cls=>L.divIcon({className:'',html:`<div class="beacon ${cls} pulse"></div>`,iconSize:[14,14],iconAnchor:[7,7]});
+  const markers = {};
+  for (const k in LIGHTS){
+    const t=LIGHTS[k];
+    markers[k]=L.marker([t.lat,t.lng],{icon:icon(t.cls)})
+      .addTo(map)
+      .bindPopup(`<b>${t.name}</b><br>Lat ${t.lat.toFixed(5)}, Lng ${t.lng.toFixed(5)}<br>${t.note||''}`);
+  }
+  L.polyline(['A','B','C','D'].map(k=>[LIGHTS[k].lat,LIGHTS[k].lng]),
+    {color:'#93c5fd',weight:3,opacity:.9}).addTo(map);
+
+  map.on('dblclick', e=>{
+    const s = `📍 双击坐标\nLat ${e.latlng.lat.toFixed(6)}, Lng ${e.latlng.lng.toFixed(6)}`;
+    document.getElementById('status').textContent = s;
+  });
+  document.getElementById('status').textContent = '双击地图任意处，可复制坐标替换成我们的私密地点 💞';
+});
+</script>
+</body>
+</html>

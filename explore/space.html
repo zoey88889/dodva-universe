@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Dodva · 太空探索（太阳系 → 星系 → 黑洞）</title>
+<style>
+  html,body{height:100%;margin:0;background:#05070d;color:#eaf2ff;
+    font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  header{position:fixed;left:0;right:0;top:0;z-index:10;display:flex;gap:10px;align-items:center;
+    padding:10px 12px;background:linear-gradient(180deg,rgba(8,12,22,.55),rgba(8,12,22,.25));
+    border-bottom:1px solid rgba(147,197,253,.18);backdrop-filter:blur(8px)}
+  header a{color:#cde3ff;text-decoration:none;border:1px solid rgba(147,197,253,.25);
+    padding:6px 10px;border-radius:999px}
+  .hud{position:fixed;right:12px;bottom:12px;z-index:10;font-size:12px;opacity:.9;
+    background:rgba(8,12,22,.55);border:1px solid rgba(147,197,253,.18);
+    padding:6px 10px;border-radius:10px;white-space:pre-wrap;max-width:min(50ch,70vw)}
+  .dock{position:fixed;left:12px;bottom:12px;z-index:10;display:flex;flex-wrap:wrap;gap:6px}
+  .btn{cursor:pointer;border:1px solid rgba(147,197,253,.25);border-radius:10px;
+    padding:6px 10px;background:rgba(147,197,253,.06);color:#eaf2ff}
+  .btn.primary{background:linear-gradient(135deg,#a5b4fc,#67e8f9,#f0abfc);color:#051019;font-weight:800}
+  canvas{position:fixed;inset:0;display:block}
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none !important;transition:none !important}
+  }
+</style>
+</head>
+<body>
+<header>
+  <a href="explore.html">← 返回探索</a>
+  <div style="margin-left:auto;opacity:.85">场景：<span id="sceneName">太阳系</span></div>
+</header>
+
+<canvas id="sky"></canvas>
+
+<div class="dock">
+  <button class="btn" data-scene="solar">① 太阳系</button>
+  <button class="btn" data-scene="galaxy">② 星系穿梭</button>
+  <button class="btn" data-scene="blackhole">③ 黑洞事件视界</button>
+  <button id="autoBtn" class="btn">⏯ 自动巡航</button>
+  <button id="resetBtn" class="btn">R 重置</button>
+</div>
+
+<div class="hud" id="hud">
+  操作：1/2/3 切换场景 · 空格 开/关自动 · 拖动 视差 · R 重置<br>
+  当前：太阳系 · 粒子：— · FPS：—
+</div>
+
+<script>
+(()=> {
+  // ===== 基础画布 =====
+  const canvas = document.getElementById('sky');
+  const ctx = canvas.getContext('2d');
+  let W=innerWidth, H=innerHeight, DPR=globalThis.devicePixelRatio||1;
+  function resize(){ W=innerWidth; H=innerHeight; canvas.width=W*DPR; canvas.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
+  addEventListener('resize', resize, {passive:true}); resize();
+
+  // ===== 状态 =====
+  const sceneNameEl = document.getElementById('sceneName');
+  const hud = document.getElementById('hud');
+  let scene = 'solar';           // 'solar' | 'galaxy' | 'blackhole'
+  let t = 0;                     // 时间（逐帧累加）
+  let auto = false;              // 自动巡航
+  let fps=0, last=performance.now();
+  let parallax = {x:0,y:0};
+  let pointer = {x: W/2, y: H/2};
+  let autoTimer = 0;             // 自动切场景计时（秒）
+
+  // ===== 交互 =====
+  addEventListener('mousemove', e=>{ pointer.x=e.clientX; pointer.y=e.clientY; }, {passive:true});
+  addEventListener('touchmove', e=>{ const p=e.touches[0]; pointer.x=p.clientX; pointer.y=p.clientY; }, {passive:true});
+  addEventListener('keydown', (e)=>{
+    const k = e.key.toLowerCase();
+    if(k===' ') { auto = !auto; e.preventDefault(); }
+    if(k==='1') setScene('solar');
+    if(k==='2') setScene('galaxy');
+    if(k==='3') setScene('blackhole');
+    if(k==='r') reset();
+  });
+  document.querySelectorAll('.btn[data-scene]').forEach(b=> b.onclick=()=> setScene(b.dataset.scene));
+  document.getElementById('autoBtn').onclick = ()=> auto = !auto;
+  document.getElementById('resetBtn').onclick = reset;
+
+  function setScene(s){
+    scene = s; t = 0; autoTimer = 0;
+    sceneNameEl.textContent = s==='solar' ? '太阳系' : s==='galaxy' ? '星系穿梭' : '黑洞事件视界';
+  }
+  function reset(){ t=0; autoTimer = 0; }
+
+  // ===== 工具 =====
+  const rand = (a,b)=> a + Math.random()*(b-a);
+  const clamp = (v,a,b)=> Math.max(a, Math.min(b, v));
+  const mix = (a,b,p)=> a + (b-a)*p;
+
+  // ===== 粒子场（自适应设备，省电）=====
+  let stars = [];
+  function initStars(count){
+    stars = Array.from({length:count}, ()=>({
+      x: Math.random()*W,
+      y: Math.random()*H,
+      r: Math.random()*1.6 + .25,
+      a: Math.random()*Math.PI*2,
+      s: Math.random()*0.35 + 0.02,  // 速度
+      hue: 200 + Math.random()*80
+    }));
+  }
+  function ensurePopulation(){
+    const base = (W*H)/22000; // 屏幕面积自适应
+    const target =
+      scene==='solar'    ? base*0.8 :
+      scene==='galaxy'   ? base*1.8 :
+                           base*0.6; // blackhole 稍 sparse
+    // 移动端限制上限，省电
+    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+    const maxParticles = isMobile ? 600 : 1600;
+    const need = clamp(Math.round(target), 120, maxParticles);
+    if (stars.length !== need) initStars(need);
+  }
+
+  // ===== 太阳系：极简行星抽象 =====
+  const planets = [
+    { name:'太阳', r: 46, hue: 45,  orbit: 0,      speed: 0.000, glow: .35 },
+    { name:'水星', r:  4, hue: 30,  orbit: 90,     speed: 0.018, glow: .15 },
+    { name:'金星', r:  8, hue: 50,  orbit: 130,    speed: 0.014, glow: .18 },
+    { name:'地球', r:  9, hue: 200, orbit: 170,    speed: 0.012, glow: .22 },
+    { name:'火星', r:  6, hue: 10,  orbit: 210,    speed: 0.010, glow: .18 },
+    { name:'木星', r: 18, hue: 35,  orbit: 270,    speed: 0.008, glow: .18 },
+    { name:'土星', r: 16, hue: 45,  orbit: 330,    speed: 0.007, glow: .18 },
+  ];
+
+  function drawSolar(dt){
+    // 背景
+    ctx.fillStyle = '#05070d'; ctx.fillRect(0,0,W,H);
+
+    // 轻薄星云（跟随指针）
+    const g = ctx.createRadialGradient(pointer.x,pointer.y,20, pointer.x,pointer.y, Math.max(W,H)*0.9);
+    g.addColorStop(0,'rgba(99,102,241,.12)'); g.addColorStop(1,'rgba(99,102,241,0)');
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+    // 星点
+    for(const s of stars){
+      const px = (pointer.x-W/2)*0.0006, py = (pointer.y-H/2)*0.0006;
+      s.x += Math.cos(s.a)*s.s + px;
+      s.y += Math.sin(s.a)*s.s + py;
+      if(s.x<-5||s.x>W+5||s.y<-5||s.y>H+5){ s.x=Math.random()*W; s.y=Math.random()*H; }
+      const tw = 0.5 + 0.5*Math.sin((t*0.04)+(s.x+s.y)*0.01);
+      ctx.fillStyle=`hsla(${s.hue},100%,80%,${0.35+0.6*tw})`;
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fill();
+    }
+
+    // 行星（居中）
+    const cx=W/2, cy=H/2;
+    // 太阳光晕
+    const sunGrad = ctx.createRadialGradient(cx,cy,10, cx,cy, 120);
+    sunGrad.addColorStop(0,'rgba(255,220,120,.8)');
+    sunGrad.addColorStop(1,'rgba(255,220,120,0)');
+    ctx.fillStyle=sunGrad; ctx.beginPath(); ctx.arc(cx,cy,140,0,Math.PI*2); ctx.fill();
+
+    planets.forEach((p,i)=>{
+      const ang = t*p.speed + i*0.7;
+      const radius = p.orbit*0.8;
+      const x = cx + Math.cos(ang)*radius;
+      const y = cy + Math.sin(ang)*radius;
+      // 轨道线（淡）
+      if(i>0){ ctx.strokeStyle='rgba(147,197,253,.13)'; ctx.beginPath(); ctx.arc(cx,cy,radius,0,Math.PI*2); ctx.stroke(); }
+      // 行星本体
+      ctx.fillStyle=`hsl(${p.hue},80%,60%)`;
+      ctx.beginPath(); ctx.arc(x,y,p.r,0,Math.PI*2); ctx.fill();
+      // 土星环
+      if(p.name==='土星'){
+        ctx.strokeStyle='rgba(200,200,220,.6)';
+        ctx.lineWidth=2; ctx.beginPath();
+        ctx.ellipse(x,y,p.r*1.8,p.r*0.8, ang*0.7, 0, Math.PI*2);
+        ctx.stroke(); ctx.lineWidth=1;
+      }
+    });
+  }
+
+  // ===== 星系：旋臂点阵 + 慢速旋转 =====
+  let arms = []; // 预生成少量旋臂点，提升性能
+  function initArms(){
+    const armCount = 4;
+    const ptsPerArm = 600; // 轻量
+    arms = [];
+    for(let a=0;a<armCount;a++){
+      const armAngle = (Math.PI*2*a)/armCount;
+      for(let i=0;i<ptsPerArm;i++){
+        const r = rand(20, Math.min(W,H)*0.55);
+        const angle = armAngle + r*0.002 + rand(-0.15,0.15);
+        const hue = 200 + (i%80);
+        arms.push({r, angle, hue, arm:a});
+      }
+    }
+  }
+  initArms();
+
+  function drawGalaxy(dt){
+    ctx.fillStyle = '#060814'; ctx.fillRect(0,0,W,H);
+
+    // 中心亮核
+    const cx=W/2, cy=H/2;
+    const core = ctx.createRadialGradient(cx,cy,10, cx,cy, Math.min(W,H)*0.6);
+    core.addColorStop(0,'rgba(240,240,255,.25)');
+    core.addColorStop(1,'rgba(240,240,255,0)');
+    ctx.fillStyle=core; ctx.fillRect(0,0,W,H);
+
+    // 旋臂
+    const rot = t*0.0008;
+    for(const pt of arms){
+      const angle = pt.angle + rot;
+      // 视差（跟随鼠标）
+      const parx = (pointer.x-W/2)*0.0003*pt.r/200;
+      const pary = (pointer.y-H/2)*0.0003*pt.r/200;
+
+      const x = cx + Math.cos(angle)*pt.r + parx*W;
+      const y = cy + Math.sin(angle)*pt.r + pary*H;
+
+      const tw = 0.6 + 0.4*Math.sin((t*0.03)+(pt.r*0.02));
+      ctx.fillStyle = `hsla(${pt.hue},100%,80%,${0.08+0.6*tw})`;
+      ctx.beginPath(); ctx.arc(x,y, 1.2 + (pt.r/300), 0, Math.PI*2); ctx.fill();
+    }
+
+    // 远景星点（使用现有 stars，稍偏蓝）
+    for(const s of stars){
+      s.x += Math.cos(s.a)*s.s*0.4;
+      s.y += Math.sin(s.a)*s.s*0.4;
+      if(s.x<-5||s.x>W+5||s.y<-5||s.y>H+5){ s.x=Math.random()*W; s.y=Math.random()*H; }
+      ctx.fillStyle=`hsla(${200+Math.random()*40},100%,85%,.35)`;
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.r*0.8,0,Math.PI*2); ctx.fill();
+    }
+  }
+
+  // ===== 黑洞：透镜光环 + 拉伸星流 =====
+  function drawBlackhole(dt){
+    ctx.fillStyle = '#03040a'; ctx.fillRect(0,0,W,H);
+
+    const cx=W/2, cy=H/2;
+    // 事件视界（暗环）
+    const r0 = Math.min(W,H)*0.12;
+    const ring = ctx.createRadialGradient(cx,cy,r0*0.6, cx,cy, r0*1.8);
+    ring.addColorStop(0,'rgba(0,0,0,1)');
+    ring.addColorStop(0.65,'rgba(0,0,0,1)');
+    ring.addColorStop(0.7,'rgba(200,220,255,.45)');
+    ring.addColorStop(0.9,'rgba(120,160,255,.12)');
+    ring.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=ring; ctx.beginPath(); ctx.arc(cx,cy,r0*2.2,0,Math.PI*2); ctx.fill();
+
+    // 引力拉伸星点
+    for(const s of stars){
+      // 朝中心拉伸
+      const dx = cx - s.x, dy = cy - s.y;
+      const dist = Math.hypot(dx,dy)+0.001;
+      const pull = 0.12 * (r0*r0) / (dist*dist); // 简化引力
+      s.x += dx/dist * pull + Math.cos(s.a)*s.s*0.2;
+      s.y += dy/dist * pull + Math.sin(s.a)*s.s*0.2;
+
+      // 拉伸描边（速度方向拉出）
+      const len = Math.min(8, 120/(dist+1));
+      const nx = s.x - (dx/dist)*len, ny = s.y - (dy/dist)*len;
+
+      ctx.strokeStyle=`hsla(${220+Math.random()*30},100%,80%,.35)`;
+      ctx.lineWidth = Math.max(0.6, 1.6 - dist/500);
+      ctx.beginPath(); ctx.moveTo(nx,ny); ctx.lineTo(s.x,s.y); ctx.stroke();
+    }
+
+    // 奇点微光（轻）
+    const glow = ctx.createRadialGradient(cx,cy,0, cx,cy, r0*0.6);
+    glow.addColorStop(0,'rgba(220,240,255,.18)');
+    glow.addColorStop(1,'rgba(220,240,255,0)');
+    ctx.fillStyle=glow; ctx.beginPath(); ctx.arc(cx,cy,r0,0,Math.PI*2); ctx.fill();
+  }
+
+  // ===== 主循环 =====
+  function loop(now){
+    requestAnimationFrame(loop);
+    // FPS 估算
+    const dt = (now-last); last=now; fps = Math.round(1000/dt);
+    t += dt;
+
+    // 视差平滑
+    const k = 0.04;
+    parallax.x = mix(parallax.x, (pointer.x - W/2)/W, k);
+    parallax.y = mix(parallax.y, (pointer.y - H/2)/H, k);
+
+    ensurePopulation();
+    if(scene==='solar')     drawSolar(dt);
+    else if(scene==='galaxy')   drawGalaxy(dt);
+    else                    drawBlackhole(dt);
+
+    // 自动巡航：每 12 秒切下一幕
+    if(auto){
+      autoTimer += dt/1000;
+      if(autoTimer > 12){
+        autoTimer = 0;
+        if(scene==='solar') setScene('galaxy');
+        else if(scene==='galaxy') setScene('blackhole');
+        else setScene('solar');
+      }
+    }
+
+    // HUD
+    hud.textContent = `操作：1/2/3 切换场景 · 空格 开/关自动 · 拖动 视差 · R 重置
+当前：${sceneNameEl.textContent} · 粒子：${stars.length} · FPS：${fps}`;
+  }
+  requestAnimationFrame(loop);
+
+  // 初始人性化：移动端自动降低 DPR（省电）
+  if (/Mobi|Android/i.test(navigator.userAgent) && DPR>1) {
+    DPR = 1; resize();
+  }
+})();
+</script>
+<footer style="text-align:center; color:#ccc; margin-top:20px; font-size:14px;">
+  Coded with love for Xinyue · by Dodva 💫
+</footer>
+</body>
+</html>
