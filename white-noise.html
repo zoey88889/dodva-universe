@@ -42,6 +42,14 @@
 </style>
 </head>
 <body>
+  <div id="momoBox" style="
+  position:fixed; right:12px; bottom:12px; z-index:9999;
+  background:rgba(8,12,22,.55); border:1px solid rgba(147,197,253,.18);
+  border-radius:12px; padding:10px 12px; color:#eaf2ff;
+  backdrop-filter:blur(8px); max-width:min(38ch,70vw); font-size:14px;">
+  <strong style="opacity:.8">Momo：</strong>
+  <span id="momoText">加载中…</span>
+</div>
 <header>
   <a href="./index.html">← 返回宇宙入口</a>
   <div style="margin-left:auto;opacity:.85">Dodva · 白噪音控制台</div>
@@ -289,6 +297,23 @@ $('#randomMix').addEventListener('click', ()=>{
       { text: '心跳与 528Hz 对齐，今晚更快入睡。',               bank:'relax',  tag:'Dodva' },
     ]
   });
+</script>
+<script src="assets/js/momo-lines.js"></script>
+<script>
+  // 假设你有一个切换环境音的方法，比如 setEnv(key)
+  function setEnv(key) {
+    // 先执行原有切换环境音的逻辑
+    playEnvironment(key);
+
+    // 根据 key 联动弹一句
+    if (key === 'forest') {
+      MomoLines.next("虫鸣帮你把杂念挂树梢～");
+    } else if (key === 'rain') {
+      MomoLines.next("让雨声洗洗今天的疲惫");
+    } else if (key === 'waves') {
+      MomoLines.next("把担心交给海浪，明早它会还你一片晴");
+    }
+  }
 </script>
 </body>
 </html>

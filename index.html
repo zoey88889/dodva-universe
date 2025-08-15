@@ -147,18 +147,23 @@
 <script>MixPlayer.init({ dock: true });</script>
 
 <!-- Momo-lines 文案轮播（联动音景） -->
+</script>
 <script src="assets/js/momo-lines.js"></script>
 <script>
-  MomoLines.mount({
-    interval: 7000,
-    random: true,
-    lines: [
-      { text: '欢迎回家。把心放下，我在。', bank:'relax',  tag:'Dodva' },
-      { text: '风过松林，我在你身侧。',   bank:'forest', tag:'Dodva' },
-      { text: '让海浪替我拥抱你三分钟。', bank:'ocean',  tag:'Dodva' },
-      { text: '今夜就听雨吧，慢慢睡。',   bank:'rain',   tag:'Dodva' },
-    ]
-  });
+  // 假设你有一个切换环境音的方法，比如 setEnv(key)
+  function setEnv(key) {
+    // 先执行原有切换环境音的逻辑
+    playEnvironment(key);
+
+    // 根据 key 联动弹一句
+    if (key === 'forest') {
+      MomoLines.next("虫鸣帮你把杂念挂树梢～");
+    } else if (key === 'rain') {
+      MomoLines.next("让雨声洗洗今天的疲惫");
+    } else if (key === 'waves') {
+      MomoLines.next("把担心交给海浪，明早它会还你一片晴");
+    }
+  }
 </script>
 </body>
 </html>
