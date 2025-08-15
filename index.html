@@ -146,55 +146,24 @@
 <script src="assets/js/mix-player.js?v=2"></script>
 <script>MixPlayer.init({ dock: true });</script>
 
-<!-- Momo-lines 文案轮播（联动音景） -->
-</script>
-<script src="assets/js/momo-lines.js"></script>
+<!-- 根路径引用，避免 /white-noise 下相对路径 404 -->
+<script src="/assets/js/momo-lines.js"></script>
 <script>
-  // 假设你有一个切换环境音的方法，比如 setEnv(key)
-  function setEnv(key) {
-    // 先执行原有切换环境音的逻辑
-    playEnvironment(key);
-
-    // 根据 key 联动弹一句
-    if (key === 'forest') {
-      MomoLines.next("虫鸣帮你把杂念挂树梢～");
-    } else if (key === 'rain') {
-      MomoLines.next("让雨声洗洗今天的疲惫");
-    } else if (key === 'waves') {
-      MomoLines.next("把担心交给海浪，明早它会还你一片晴");
-    }
-  }
-</script>
-<!-- 1) 引入暖心话模块 -->
-<script src="assets/js/momo-lines.js"></script>
-
-<script>
-  // 2) 首页进来先轻轻问好（可选）
-  document.addEventListener('DOMContentLoaded', () => {
-    // 3秒后给个轻提示，不打扰
-    setTimeout(() => {
-      if (window.MomoLines) MomoLines.next("欢迎回家～先选个声音，慢慢进入自己的节奏 💙");
-    }, 3000);
+  // 1) 启动暖心文案轮播（挂到 #momo-line）
+  MomoLines.mount({
+    mount: '#momo-line',
+    interval: 6500,
+    random: true,
+    lines: [
+      { text: '把房间调成 0.3 的光，我们去森林里走一会。', bank:'forest', tag:'Dodva' },
+      { text: '让雨声洗洗今天的疲惫，我在旁边。',              bank:'rain',   tag:'Dodva' },
+      { text: '把担心交给海浪，慢慢退去 🌊',                      bank:'ocean',  tag:'Dodva' },
+      { text: '心跳与 528Hz 对齐，今晚更快入睡。',               bank:'relax',  tag:'Dodva' },
+      { text: '一次只做一件小事，已经很棒啦。',                   tag:'Dodva' },
+      { text: '你已经做得很好了，真的。',                        tag:'Dodva' }
+    ]
   });
-
-  // 3) 如果首页有你自己的分类切换（例子：按钮或下拉）
-  //    每次切换后追加一句话（把这段放到你切换逻辑的回调里）
-  // 例：
-  window.onSelectScene = function (key) {
-    // 你原本的切换逻辑……
-    // DodvaAudio.setBank(key) 或 MixPlayer.toggle('forest') 之类的
-
-    if (!window.MomoLines) return;
-    const map = {
-      forest: "虫鸣把杂念挂在树梢上～",
-      rain:   "让雨声洗洗今天的疲惫 ☔️",
-      ocean:  "把担心交给海浪，慢慢退去 🌊",
-      relax:  "心跳与频率对齐，慢下来就对了 🫶",
-      fire:   "让火光慢一点跳舞，我们也慢一点 🔥"
-    };
-    MomoLines.next(map[key] || "我在这儿，陪你把世界音量调小一点。");
-  }
-</script>
+  </script>
 <!-- 先引入依赖的 JS 文件 -->
 <script src="assets/js/momo-lines.js"></script>
 <script src="assets/js/mix-player.js"></script>
