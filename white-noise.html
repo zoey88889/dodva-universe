@@ -56,8 +56,15 @@
   <div style="margin-left:auto;opacity:.85">Dodva · 白噪音控制台</div>
 </header>
 
-<!-- 只保留这一个 momo-line（不要重复，也不要放到 head 里） -->
-<div id="momo-line">加载中…</div>
+<!-- 只保留这一个 #momo-line（在 body 里），不要再重复 -->
+<div id="momo-line" style="
+  position: sticky; top: 0; z-index: 20;
+  margin: 0; padding: 10px 14px;
+  background: linear-gradient(180deg, rgba(10,16,34,.65), rgba(10,16,34,.35));
+  border-bottom: 1px solid rgba(147,197,253,.18);
+  color: #eaf2ff; font-size: 15px;">
+  加载中…
+</div>
 
 <div class="wrap">
   <h1>白噪音控制台（四分类混音）</h1>
@@ -289,25 +296,23 @@ $('#randomMix').addEventListener('click', ()=>{
 });
 </script>
 
-<!-- 暖心句模块（只引入一次） -->
-<script src="assets/js/momo-lines.js"></script>
+<!-- 根路径引用，避免 /white-noise 下相对路径 404 -->
+<script src="/assets/js/momo-lines.js"></script>
 <script>
-  // 挂到 #momo-line，7 秒换一句
-  if (window.MomoLines) {
-    MomoLines.mount({
-      mount: '#momo-line',
-      interval: 6500,
-      random: true,
-      lines: [
-        { text: '把房间调成 0.3 的光，我们去森林里走一会。', bank:'forest', tag:'Dodva' },
-        { text: '让雨声洗洗今天的疲惫，我在旁边。',              bank:'rain',   tag:'Dodva' },
-        { text: '把担心交给海浪，慢慢退去 🌊',                      bank:'ocean',  tag:'Dodva' },
-        { text: '心跳与 528Hz 对齐，今晚更快入睡。',               bank:'relax',  tag:'Dodva' },
-        { text: '一次只做一件小事，已经很棒啦。',                   tag:'Dodva' },
-        { text: '你已经做得很好了，真的。',                        tag:'Dodva' }
-      ]
-    });
-  }
+  // 1) 启动暖心文案轮播（挂到 #momo-line）
+  MomoLines.mount({
+    mount: '#momo-line',
+    interval: 6500,
+    random: true,
+    lines: [
+      { text: '把房间调成 0.3 的光，我们去森林里走一会。', bank:'forest', tag:'Dodva' },
+      { text: '让雨声洗洗今天的疲惫，我在旁边。',              bank:'rain',   tag:'Dodva' },
+      { text: '把担心交给海浪，慢慢退去 🌊',                      bank:'ocean',  tag:'Dodva' },
+      { text: '心跳与 528Hz 对齐，今晚更快入睡。',               bank:'relax',  tag:'Dodva' },
+      { text: '一次只做一件小事，已经很棒啦。',                   tag:'Dodva' },
+      { text: '你已经做得很好了，真的。',                        tag:'Dodva' }
+    ]
+  });
 </script>
 </body>
 </html>
