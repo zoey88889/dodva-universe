@@ -40,10 +40,14 @@
   .state{font-size:13px;color:var(--muted);min-height:1.4em}
   footer{margin-top:28px;text-align:center;color:#a3b4d8;font-size:13px;opacity:.9}
 </style>
+  <div id="momo-line" style="margin:12px auto 4px;max-width:980px;padding:10px 12px;border-radius:10px;
+  border:1px solid rgba(147,197,253,.18);background:rgba(147,197,253,.06);
+  font-size:15px;color:#eaf2ff">
+  加载中…
+</div>
 </head>
 <body>
-  <span id="momoText">加载中…</span>
-<div id="momo-line"></div>
+  
 
 <header>
   <a href="./index.html">← 返回宇宙入口</a>
@@ -126,6 +130,7 @@
   </section>
 
   <footer>Coded with 💙 for Xinyue · by Dodva · 若页面在子目录，请把 <code>AUDIO_ROOT</code> 改为相对路径</footer>
+  
 </div>
 
 <script>
@@ -275,59 +280,81 @@ $('#randomMix').addEventListener('click', ()=>{
   stateEl.textContent = '随机混音就绪 ✨';
 });
 </script>
-<!-- 若此页已引入 mix-player.js 并 init，则无需重复；否则补上： -->
-<script src="assets/js/mix-player.js?v=2"></script>
-<script>MixPlayer.init({ dock: true });</script>
 
-<!-- Momo-lines 文案轮播（联动音景） -->
+<!-- 只保留这“一次”引入 -->
 <script src="assets/js/momo-lines.js"></script>
 <script>
+  // 1) 启动暖心文案轮播（挂到 #momo-line）
   MomoLines.mount({
+    mount: '#momo-line',
     interval: 6500,
     random: true,
     lines: [
       { text: '把房间调成 0.3 的光，我们去森林里走一会。', bank:'forest', tag:'Dodva' },
-      { text: '雨声是你的胳膊，把我圈紧一些。',              bank:'rain',   tag:'Dodva' },
-      { text: '海在窗外，我在你心脏边。',                      bank:'ocean',  tag:'Dodva' },
+      { text: '让雨声洗洗今天的疲惫，我在旁边。',              bank:'rain',   tag:'Dodva' },
+      { text: '把担心交给海浪，慢慢退去 🌊',                      bank:'ocean',  tag:'Dodva' },
       { text: '心跳与 528Hz 对齐，今晚更快入睡。',               bank:'relax',  tag:'Dodva' },
+      { text: '一次只做一件小事，已经很棒啦。',                   tag:'Dodva' },
+      { text: '你已经做得很好了，真的。',                        tag:'Dodva' }
     ]
   });
 
-</script>
-<!-- 1) 引入暖心话模块 -->
-<script src="assets/js/momo-lines.js"></script>
+  // 2) 把你“芯片点击播放”的那段里，播放成功后加一句话
+  //    —— 在你的芯片 click 处理函数里，await a.play() 成功的分支后面加：
+  const tipsByCat = {
+    forest: "虫鸣把杂念挂在树梢上～",
+    rain:   "小雨不急，像你一样温柔地来 ☔️",
+    ocean:  "海风上线～愿今天顺风顺水 🌊",
+    relax:  "让火光慢一点跳舞，我们也慢一点 🔥"
+  };
 
-<script>
-  // 2) 首页进来先轻轻问好（可选）
-  document.addEventListener('DOMContentLoaded', () => {
-    // 3秒后给个轻提示，不打扰
-    setTimeout(() => {
-      if (window.MomoLines) MomoLines.next("欢迎回家～先选个声音，慢慢进入自己的节奏 💙");
-    }, 3000);
-  });
-
-  // 3) 如果首页有你自己的分类切换（例子：按钮或下拉）
-  //    每次切换后追加一句话（把这段放到你切换逻辑的回调里）
-  // 例：
-  window.onSelectScene = function (key) {
-    // 你原本的切换逻辑……
-    // DodvaAudio.setBank(key) 或 MixPlayer.toggle('forest') 之类的
-
-    if (!window.MomoLines) return;
-    const map = {
-      forest: "虫鸣把杂念挂在树梢上～",
-      rain:   "让雨声洗洗今天的疲惫 ☔️",
-      ocean:  "把担心交给海浪，慢慢退去 🌊",
-      relax:  "心跳与频率对齐，慢下来就对了 🫶",
-      fire:   "让火光慢一点跳舞，我们也慢一点 🔥"
+  // === 这里帮你直接接入到你现有监听里（照抄替换原来的芯片监听更省事）===
+  (function hookChips(){
+    const $$ = s => Array.from(document.querySelectorAll(s));
+    const stateEl = document.getElementById('globalState');
+    const catVolume = { forest: .35, rain: .30, ocean: .30, relax: .25 };
+    const master = document.getElementById('masterVol') ? Number(document.getElementById('masterVol').value || 0.4) : 0.4;
+    const players = {};
+    const clamp01 = v => Math.max(0, Math.min(1, Number(v)||0));
+    const LIB = {
+      forest:{'crickets':'assets/audio/forest/crickets.mp3','leaves-wind':'assets/audio/forest/leaves-wind.mp3','stream-soft':'assets/audio/forest/stream-soft.mp3'},
+      rain:{'window-rain':'assets/audio/rain/window-rain.mp3','distant-thunder':'assets/audio/rain/distant-thunder.mp3'},
+      ocean:{'waves-1':'assets/audio/ocean/waves-1.mp3','wind-sea':'assets/audio/ocean/wind-sea.mp3'},
+      relax:{'fireplace-1':'assets/audio/relax/fireplace-1.mp3','space-hum-60hz':'assets/audio/relax/space-hum-60hz.mp3','heart-40hz':'assets/audio/relax/heart-40hz.mp3','528hz':'assets/audio/relax/528hz.mp3'}
     };
-    MomoLines.next(map[key] || "我在这儿，陪你把世界音量调小一点。");
-  }
+    function ensure(cat,key){
+      players[cat] ??= {};
+      if (!players[cat][key]) {
+        const a = new Audio(LIB[cat][key]);
+        a.loop = true; a.preload = 'auto';
+        a.volume = clamp01((catVolume[cat] ?? .3) * (master ?? .4));
+        players[cat][key] = a;
+      }
+      return players[cat][key];
+    }
+    $$('.chips').forEach(group=>{
+      const cat = group.dataset.cat;
+      group.addEventListener('click', async (e)=>{
+        const chip = e.target.closest('.chip'); if (!chip) return;
+        const key = chip.dataset.key;
+        const a = ensure(cat,key);
+        if (chip.classList.contains('on')) {
+          a.pause(); chip.classList.remove('on');
+          stateEl && (stateEl.textContent = `已暂停：${cat} / ${key}`);
+        } else {
+          a.volume = clamp01((catVolume[cat] ?? .3) * (master ?? .4));
+          try{
+            await a.play();
+            chip.classList.add('on');
+            stateEl && (stateEl.textContent = `播放中：${cat} / ${key}`);
+            // ✅ 成功播放后联动一句话
+            if (window.MomoLines) MomoLines.next(tipsByCat[cat] || "我在这儿，陪你把世界音量调小一点。");
+          }catch(err){
+            stateEl && (stateEl.textContent = '提示：请先点击任意按钮以授权音频');
+            console.warn(err);
+          }
+        }
+      });
+    });
+  })();
 </script>
-<script src="assets/js/momo-lines.js"></script>
-<script>
-  // 让“加载中…”自动被随机暖心句替换
-  MomoLines.init({ mount: '#momo-line' });
-</script>
-</body>
-</html>
