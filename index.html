@@ -195,10 +195,13 @@
     MomoLines.next(map[key] || "我在这儿，陪你把世界音量调小一点。");
   }
 </script>
+<!-- 先引入依赖的 JS 文件 -->
 <script src="assets/js/momo-lines.js"></script>
+<script src="assets/js/mix-player.js"></script>
+
+<!-- 最后初始化 -->
 <script>
-  // 让“加载中…”自动被随机暖心句替换
-  MomoLines.init({ mount: '#momo-line' });
+  MomoLines.init();
 </script>
 </body>
 </html>
