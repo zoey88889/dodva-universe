@@ -69,3 +69,8 @@ img.resp{max-width:100%;height:auto;border-radius:12px;border:1px solid rgba(255
   backdrop-filter: blur(8px);
   pointer-events: none;        /* 不挡点击 */
 }
+#white-noise-controls {
+  margin: 0 auto;        /* 居中 */
+  display: block;        /* 避免 flex 影响 */
+  text-align: center;    /* 居中内部按钮 */
+}
