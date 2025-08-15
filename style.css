@@ -55,6 +55,7 @@ img.resp{max-width:100%;height:auto;border-radius:12px;border:1px solid rgba(255
 }
 .env-buttons button:hover,.music-buttons button:hover,#sttToggle:hover{ background:rgba(255,255,255,.15) }
 .now-playing,.notice{ color:#bcd; margin-top:6px; font-size:.95rem }
+
 #momo-line{
   position: fixed;
   left: 12px; bottom: 60px;   /* 避开左下角的播放器 dock */
