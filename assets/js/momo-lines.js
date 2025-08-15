@@ -1,3 +1,33 @@
+
+// 在文件顶部或适当位置放一份分类到文案的映射
+const MOMO_LINES_BY_BANK = {
+  forest: "虫鸣把杂念挂在树梢上～🌳",
+  rain:   "让雨声洗洗今天的疲惫 ☔️",
+  ocean:  "把担心交给海浪，给心一点空间 🌊",
+  relax:  "心跳 40Hz & 528Hz，稳稳地抱住你 🫶"
+};
+
+// 例1：如果你有 setBank(bank) 这种“单轨/主分类”函数：
+function setBank(bank /* ... 你的其他参数 */) {
+  // …原来的逻辑（设置 audio.src / 播放 / 调音量 …）
+
+  // ——联动文案——
+  if (window.MomoLines) {
+    const msg = MOMO_LINES_BY_BANK[bank] || "声音就位，我们慢慢来～";
+    MomoLines.next(msg); // ← 这里新加
+  }
+}
+
+// 例2：如果你有多轨开关，比如 toggleTrack(key, on)：
+function toggleTrack(key, on) {
+  // …原来的逻辑（为某轨创建/暂停 Audio 实例 …）
+
+  // ——联动文案（仅在开启该轨时说一句）——
+  if (on && window.MomoLines) {
+    const msg = MOMO_LINES_BY_BANK[key] || "把音量调到舒服的位置就好～";
+    MomoLines.next(msg); // ← 这里新加
+  }
+}
 ;(()=> {
   // 1) 台词库（可随时增删）
   const LINES = [

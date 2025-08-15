@@ -55,3 +55,17 @@ img.resp{max-width:100%;height:auto;border-radius:12px;border:1px solid rgba(255
 }
 .env-buttons button:hover,.music-buttons button:hover,#sttToggle:hover{ background:rgba(255,255,255,.15) }
 .now-playing,.notice{ color:#bcd; margin-top:6px; font-size:.95rem }
+#momo-line{
+  position: fixed;
+  left: 12px; bottom: 60px;   /* 避开左下角的播放器 dock */
+  z-index: 9998;
+  font-size: 13px; line-height: 1.35;
+  color: #eaf2ff; opacity: .9;
+  max-width: 260px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(8,12,22,.55);
+  border: 1px solid rgba(147,197,253,.18);
+  backdrop-filter: blur(8px);
+  pointer-events: none;        /* 不挡点击 */
+}

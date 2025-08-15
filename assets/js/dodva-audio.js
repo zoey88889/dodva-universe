@@ -19,7 +19,22 @@
  *      });
  *    </script>
  */
+const MOMO_LINES_BY_BANK = {
+  forest: "虫鸣把杂念挂在树梢上～🌳",
+  rain:   "让雨声洗洗今天的疲惫 ☔️",
+  ocean:  "把担心交给海浪，给心一点空间 🌊",
+  relax:  "心跳 40Hz & 528Hz，稳稳地抱住你 🫶"
+};
 
+function setBank(bank, opts = {}) {
+  // …原来的设置 src/volume/播放 …
+
+  // ——联动文案——
+  if (window.MomoLines) {
+    const msg = MOMO_LINES_BY_BANK[bank] || "声音就位，我们慢慢来～";
+    MomoLines.next(msg); // ← 这里新加
+  }
+}
 const STORAGE_KEY = 'dodva.audio.v2';
 
 const defaultBanks = (root)=>({
