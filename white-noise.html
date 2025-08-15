@@ -50,6 +50,8 @@
   <strong style="opacity:.8">Momo：</strong>
   <span id="momoText">加载中…</span>
 </div>
+<div id="momo-line" style="margin: 10px 0; font-size: 16px; color: #fff;"></div>
+
 <header>
   <a href="./index.html">← 返回宇宙入口</a>
   <div style="margin-left:auto;opacity:.85">Dodva · 白噪音控制台</div>
@@ -328,6 +330,11 @@ $('#randomMix').addEventListener('click', ()=>{
     };
     MomoLines.next(map[key] || "我在这儿，陪你把世界音量调小一点。");
   }
+</script>
+<script src="assets/js/momo-lines.js"></script>
+<script>
+  // 让“加载中…”自动被随机暖心句替换
+  MomoLines.init({ mount: '#momo-line' });
 </script>
 </body>
 </html>
