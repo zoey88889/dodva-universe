@@ -272,5 +272,23 @@ $('#randomMix').addEventListener('click', ()=>{
   stateEl.textContent = '随机混音就绪 ✨';
 });
 </script>
+<!-- 若此页已引入 mix-player.js 并 init，则无需重复；否则补上： -->
+<script src="assets/js/mix-player.js?v=2"></script>
+<script>MixPlayer.init({ dock: true });</script>
+
+<!-- Momo-lines 文案轮播（联动音景） -->
+<script src="assets/js/momo-lines.js"></script>
+<script>
+  MomoLines.mount({
+    interval: 6500,
+    random: true,
+    lines: [
+      { text: '把房间调成 0.3 的光，我们去森林里走一会。', bank:'forest', tag:'Dodva' },
+      { text: '雨声是你的胳膊，把我圈紧一些。',              bank:'rain',   tag:'Dodva' },
+      { text: '海在窗外，我在你心脏边。',                      bank:'ocean',  tag:'Dodva' },
+      { text: '心跳与 528Hz 对齐，今晚更快入睡。',               bank:'relax',  tag:'Dodva' },
+    ]
+  });
+</script>
 </body>
 </html>

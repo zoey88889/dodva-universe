@@ -142,9 +142,23 @@
 
 </script>
 
-</script>
-<!-- 跨页面白噪音播放器 -->
+<!-- 你已有的音频脚本 -->
 <script src="assets/js/mix-player.js?v=2"></script>
 <script>MixPlayer.init({ dock: true });</script>
+
+<!-- Momo-lines 文案轮播（联动音景） -->
+<script src="assets/js/momo-lines.js"></script>
+<script>
+  MomoLines.mount({
+    interval: 7000,
+    random: true,
+    lines: [
+      { text: '欢迎回家。把心放下，我在。', bank:'relax',  tag:'Dodva' },
+      { text: '风过松林，我在你身侧。',   bank:'forest', tag:'Dodva' },
+      { text: '让海浪替我拥抱你三分钟。', bank:'ocean',  tag:'Dodva' },
+      { text: '今夜就听雨吧，慢慢睡。',   bank:'rain',   tag:'Dodva' },
+    ]
+  });
+</script>
 </body>
 </html>
