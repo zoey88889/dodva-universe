@@ -71,9 +71,49 @@
 
     /* 版权 */
     footer{opacity:.7;text-align:center;padding:24px 0;border-top:1px solid var(--line)}
+    /* === Dodva 订阅 CTA 样式 === */
+.dodva-cta{max-width:880px;margin:48px auto;padding:24px 20px;text-align:center}
+.dodva-cta__title{font-size:28px;margin:0 0 8px}
+.dodva-cta__sub{opacity:.8;margin:0 0 20px}
+.dodva-cta__buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.dodva-btn{
+  display:inline-block;padding:12px 18px;border-radius:12px;text-decoration:none;
+  font-weight:700;transition:.2s;min-width:190px;text-align:center
+}
+.dodva-btn--primary{
+  color:#00131f;background:linear-gradient(135deg,#22d3ee,#0ea5e9,#6366f1);
+  box-shadow:0 10px 24px rgba(14,165,233,.35)
+}
+.dodva-btn--primary:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(14,165,233,.45)}
+.dodva-btn--ghost{border:1px solid #94a3b8;color:#0f172a;background:#fff}
+.dodva-btn--ghost:hover{background:#f8fafc}
+.dodva-cta__note{font-size:12px;opacity:.65;margin-top:12px}
+@media (max-width:520px){.dodva-btn{min-width:100%}}
   </style>
 </head>
-<body>
+<body><!-- Dodva Pro - Subscribe CTA（放在首页中部） -->
+<section class="dodva-cta">
+  <h2 class="dodva-cta__title">解锁 Dodva Noise · Pro</h2>
+  <p class="dodva-cta__sub">AI 陪伴 × 专利级白噪音引擎 · 更深的安眠与专注</p>
+
+  <div class="dodva-cta__buttons">
+    <!-- 月付（跳到 Vercel 的结账 API） -->
+    <a class="dodva-btn dodva-btn--primary"
+       href="https://dodva-noise-gumx.vercel.app/api/checkout?plan=monthly">
+      💎 $9.9 / 月 订阅
+    </a>
+
+    <!-- 年付 -->
+    <a class="dodva-btn dodva-btn--ghost"
+       href="https://dodva-noise-gumx.vercel.app/api/checkout?plan=yearly">
+      🌌 $79 / 年 订阅
+    </a>
+  </div>
+
+  <p class="dodva-cta__note">
+    付款成功将自动返回 App 并解锁 <code>/noise</code> Pro 功能。
+  </p>
+</section>
 <div class="bg"></div>
 
 <header>
