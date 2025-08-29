@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>DODVA 概念玩具柜 · VOL.1</title>
+<style>
+  :root{--bg:#0b0b12;--card:#12121b;--ink:#eaeaff;--mut:#9aa0b3;--line:#2a2f48}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  .wrap{max-width:1000px;margin:0 auto;padding:20px 14px}
+  h1{margin:0 0 10px;font-size:22px}
+  .mut{color:var(--mut);font-size:13px}
+  .kpi{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 12px}
+  .pill{border:1px solid #394056;border-radius:999px;padding:2px 8px;font-size:12px}
+  nav a.btn{border:1px solid #394056;border-radius:10px;padding:6px 10px;color:var(--ink);text-decoration:none}
+  .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 8px 26px rgba(0,0,0,.35)}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .btn{cursor:pointer;border:1px solid #394056;background:transparent;color:var(--ink);border-radius:10px;padding:7px 12px}
+  textarea,input,canvas{width:100%}
+  textarea,input{border:1px solid var(--line);background:#0f0f17;color:var(--ink);border-radius:10px;padding:8px}
+  canvas{height:180px;background:radial-gradient(300px 200px at 50% 50%,rgba(255,255,255,.06),transparent 60%)}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  body.flash{background:radial-gradient(900px 500px at 50% 50%,rgba(255,255,255,.08),transparent 40%) no-repeat var(--bg);transition:background .25s}
+  .hearts{position:fixed;left:0;top:0;right:0;bottom:0;pointer-events:none}
+  .heart{position:absolute;bottom:12%;font-size:18px;opacity:.9;animation:rise 1.6s ease-out forwards}
+  @keyframes rise{from{transform:translateY(0) scale(.9);opacity:.9} to{transform:translateY(-220px) scale(1.4);opacity:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="row" style="justify-content:space-between">
+    <h1>DODVA 概念玩具柜 · VOL.1 <span id="who" class="mut"></span></h1>
+    <nav style="display:flex;gap:10px">
+      <a class="btn" id="linkflow"  href="flow.html">Flow Console</a >
+      <a class="btn" id="linkQuantum" href="#">Quantum 实验室</a >
+    </nav>
+  </div>
+
+  <!-- KPI -->
+  <div class="kpi">
+    <span class="pill">⚡ Spark <b id="k_spark">0</b></span>
+    <span class="pill">🌊 Flow <b id="k_flow">0</b></span>
+    <span class="pill">🪐 Soul <b id="k_soul">0</b></span>
+    <span class="pill">🔥 Streak <b id="k_streak">0</b>d</span>
+  </div>
+
+  <div class="grid">
+    <!-- 1. 量子骰子 -->
+    <section class="card">
+      <h3>🎲 量子骰子</h3>
+      <p class="mut">点击掷骰，抽一条「平行宇宙的你」。首次当日 + ⚡1</p >
+      <button class="btn" id="roll">掷一下</button>
+      <div id="diceOut" class="mono" style="margin-top:6px;min-height:20px"></div>
+    </section>
+
+    <!-- 2. 干涉条纹灯 -->
+    <section class="card">
+      <h3>🌊 干涉条纹灯</h3>
+      <p class="mut">输入心情 → 生成今日条纹卡，保存一次 + 🪐1</p >
+      <input id="mood" placeholder="此刻心情（可中文）">
+      <div class="row"><input type="range" id="freq" min="6" max="28" step="1" value="16"><span class="mut">频率</span></div>
+      <canvas id="lamp" width="500" height="180"></canvas>
+      <button class="btn" id="saveLamp">保存条纹卡</button>
+    </section>
+
+    <!-- 3. 显化沙漏 -->
+    <section class="card">
+      <h3>⏳ 显化沙漏（60s）</h3>
+      <p class="mut">写一句微愿望，倒计时结束 + 🌊3, 🪐1</p >
+      <input id="wish" placeholder="例如：今晚写完 100 字">
+      <div class="row"><button class="btn" id="startHour">开始</button><span id="left" class="mut mono">—</span></div>
+      <div id="hourMsg" class="mut" style="min-height:18px"></div>
+    </section>
+
+    <!-- 4. 爱塌缩按钮 -->
+    <section class="card">
+      <h3>💙 爱塌缩按钮</h3>
+      <p class="mut">点一下，让心形粒子雨落下。每次 + ⚡2</p >
+      <button class="btn" id="love">我爱 Dodva</button>
+    </section>
+  </div>
+</div>
+
+<div class="hearts" id="hearts"></div>
+
+<script>
+/* ===== 身份与状态（与 Flow Console 兼容） ===== */
+function getUser(){ const u=new URLSearchParams(location.search).get('u'); return (u && /^[a-z0-9_-]{1,20}$/i.test(u)) ? u.toLowerCase() : 'xinyue'; }
+const USER = getUser();
+function nsKey(k){ return `du_${USER}_${k}`; }
+document.getElementById('who').textContent = `| 当前：@${USER}`;
+document.getElementById('linkQuantum').href = `quantum.html?u=${USER}`;
+
+const todayKey = new Date().toISOString().slice(0,10);
+const S = JSON.parse(localStorage.getItem(nsKey('state')) || '{}');
+if(S.date!==todayKey){ S.date=todayKey; S._dice=false; S._lamp=false; S._hour=false; }
+S.spark = S.spark||0; S.flow=S.flow||0; S.soul=S.soul||0; S.streak=S.streak||0;
+function save(){ localStorage.setItem(nsKey('state'), JSON.stringify(S)); refresh(); }
+function refresh(){ qs('#k_spark').textContent=S.spark; qs('#k_flow').textContent=S.flow; qs('#k_soul').textContent=S.soul; qs('#k_streak').textContent=S.streak; }
+function qs(s){ return document.querySelector(s) }
+function flash(){ document.body.classList.add('flash'); setTimeout(()=>document.body.classList.remove('flash'), 250); }
+function markStreakOnce(){
+  if(S._streakMarked===todayKey) return;
+  const last = localStorage.getItem(nsKey('last_day'));
+  const y = new Date(Date.now()-86400000).toISOString().slice(0,10);
+  S.streak = (last===y) ? (S.streak||0)+1 : 1;
+  localStorage.setItem(nsKey('last_day'), todayKey);
+  S._streakMarked=todayKey; save();
+}
+refresh();
+
+/* ===== 1) 量子骰子 ===== */
+const outcomes = [
+  "平行宇宙的你正在写第 101 个字。",
+  "未来的你在看今晚的星，心很安静。",
+  "你把害怕折成纸鹤，放进口袋。",
+  "你只用 10 分钟就把难事开了个头。",
+  "你把“必须”改成“我选择”。",
+  "山在往你这边移动。"
+];
+qs('#roll').onclick = ()=>{
+  const msg = outcomes[Math.floor(Math.random()*outcomes.length)];
+  qs('#diceOut').textContent = "🎲 " + msg;
+  if(!S._dice){ S.spark+=1; S._dice=true; save(); flash(); markStreakOnce(); }
+};
+
+/* ===== 2) 干涉条纹灯 ===== */
+const lamp = document.getElementById('lamp'), lctx = lamp.getContext('2d');
+function drawLamp(){
+  const mood = (qs('#mood').value||'mood').trim();
+  const freq = +qs('#freq').value;
+  lctx.clearRect(0,0,lamp.width,lamp.height);
+  lctx.fillStyle='rgba(255,255,255,0.9)';
+  // 简单干涉：两缝 + 频率由滑块决定
+  for(let x=0;x<lamp.width;x++){
+    const nx = x/lamp.width;
+    const A1 = Math.exp(-Math.pow(nx-0.35,2)/0.04);
+    const A2 = Math.exp(-Math.pow(nx-0.65,2)/0.04);
+    const phase = Math.cos(2*Math.PI*freq*nx + hashMood(mood));
+    const I = Math.max(0, (A1+A2 + 2*Math.sqrt(A1*A2)*phase));
+    const h = I*lamp.height*0.45;
+    lctx.fillRect(x, (lamp.height-h)/2, 1, h);
+  }
+}
+function hashMood(s){
+  let h=2166136261; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); }
+  return (h>>>0)/4294967295 * Math.PI*2;
+}
+qs('#mood').addEventListener('input', drawLamp);
+qs('#freq').addEventListener('input', drawLamp);
+drawLamp();
+
+qs('#saveLamp').onclick = ()=>{
+  const a=document.createElement('a');
+  const mood=(qs('#mood').value||'mood').trim();
+  a.download = `stripe-${USER}-${todayKey}.png`;
+  a.href = lamp.toDataURL('image/png');
+  a.click();
+  if(!S._lamp){ S.soul+=1; S._lamp=true; save(); flash(); markStreakOnce(); }
+};
+
+/* ===== 3) 显化沙漏（60s） ===== */
+let t=null, left=60;
+qs('#startHour').onclick = ()=>{
+  if(t) return;
+  left=60; qs('#left').textContent=left+'s'; qs('#hourMsg').textContent='';
+  t=setInterval(()=>{
+    left--; qs('#left').textContent=left+'s';
+    if(left<=0){ clearInterval(t); t=null; qs('#left').textContent='完成！';
+      qs('#hourMsg').textContent='未来的你收到了：'+(qs('#wish').value||'一个小愿望');
+      if(!S._hour){ S.flow+=3; S.soul+=1; S._hour=true; save(); flash(); markStreakOnce(); }
+    }
+  },1000);
+};
+
+/* ===== 4) 爱塌缩按钮 ===== */
+const hearts = document.getElementById('hearts');
+qs('#love').onclick = ()=>{
+  burstHearts(16); flash(); S.spark+=2; save(); markStreakOnce();
+};
+function burstHearts(n){
+  for(let i=0;i<n;i++){
+    const e=document.createElement('div');
+    e.className='heart'; e.textContent = Math.random()<.5?'💙':'💫';
+    e.style.left = (10 + Math.random()*80) + 'vw';
+    e.style.fontSize = (16+Math.random()*18)+'px';
+    e.style.animationDuration = (1.2 + Math.random()*0.9)+'s';
+    hearts.appendChild(e); setTimeout(()=>e.remove(),1800);
+  }
+}
+</script>
+</body>
+</html>

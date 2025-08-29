@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8">
+  <a class="btn" href=" ">Quantum 实验室</a >
+  <a class="btn" href="toys.html?u=xinyue">DODVA 概念玩具柜</a >
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Dodva Universe · Flow Console (Multi)</title>
+<style>
+  :root{--bg:#0b0b12;--card:#12121b;--ink:#eaeaff;--muted:#9aa0b3;--acc:#8ef;--ok:#9f8fff}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  .wrap{max-width:960px;margin:0 auto;padding:28px 16px}
+  h1{margin:0 0 12px}
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(270px,1fr))}
+  .card{background:var(--card);border:1px solid #26263a;border-radius:14px;padding:16px 16px 18px;box-shadow:0 8px 26px rgba(0,0,0,.35)}
+  .card h2{margin:0 0 8px;font-size:18px}
+  .muted{color:var(--muted);font-size:13px}
+  .btn{cursor:pointer;border:1px solid #394056;background:transparent;color:var(--ink);
+       border-radius:10px;padding:8px 12px}
+  .btn[disabled]{opacity:.5;cursor:not-allowed}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .kpi{display:flex;gap:10px;margin:8px 0 2px;flex-wrap:wrap}
+  .pill{border:1px solid #394056;border-radius:999px;padding:2px 8px;font-size:12px}
+  .ok{color:#cfe; border-color:#3d5369}
+  .bar{height:8px;border-radius:6px;background:#1e2436;overflow:hidden}
+  .bar>i{display:block;height:100%;background:linear-gradient(90deg,#6df,#9f8fff);width:0%}
+  textarea{width:100%;min-height:84px;border:1px solid #2a2f48;background:#0f0f17;color:var(--ink);
+           border-radius:10px;padding:10px;resize:vertical}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .tw{animation:fade .35s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none}}
+  /* 星点闪烁反馈 */
+  body.starflash{background:
+     radial-gradient(1200px 600px at 50% 50%,rgba(255,255,255,.07),transparent 40%) no-repeat var(--bg);
+     transition:background .25s ease}
+  /* 顶部身份选择器 */
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:12px}
+  .who{display:flex;align-items:center;gap:8px}
+  select{background:#0f0f17;color:var(--ink);border:1px solid #2a2f48;border-radius:10px;padding:6px 8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <h1>Dodva Flow Console ✨ <span id="whoText" class="muted"></span></h1>
+    <div class="who">
+      <span class="muted">切换身份</span>
+      <select id="userSel">
+        <option value="xinyue">xinyue</option>
+        <option value="mengmeng">mengmeng</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- 积分看板 -->
+  <div class="kpi">
+    <span class="pill">⚡ Spark <b id="k_spark">0</b></span>
+    <span class="pill">🌊 Flow <b id="k_flow">0</b></span>
+    <span class="pill">🪐 Soul <b id="k_soul">0</b></span>
+    <span class="pill ok">🔥 Streak <b id="k_streak">0</b>d</span>
+  </div>
+
+  <div class="grid">
+    <!-- A. 1分钟呼吸 -->
+    <section class="card">
+      <h2>1 分钟呼吸（稳住）</h2>
+      <p class="muted">跟随 60s 倒计时：吸 4｜停 2｜呼 4。完成 + 🌊5, ⚡1</p >
+      <div class="bar"><i id="breatheBar"></i></div>
+      <div class="row" style="margin-top:10px">
+        <button id="btnBreathe" class="btn">开始 60s</button>
+        <span id="breatheLeft" class="mono muted">—</span>
+      </div>
+    </section>
+
+    <!-- B. 三行日记 -->
+    <section class="card">
+      <h2>三行日记（不可能失败）</h2>
+      <p class="muted">写下 3 句：感受 / 感谢 / 下一步。完成 + 🌊4, 🪐3</p >
+      <textarea id="j1" placeholder="1）我现在的感受是…"></textarea>
+      <textarea id="j2" placeholder="2）我今天感谢…"></textarea>
+      <textarea id="j3" placeholder="3）我下一步最小行动…"></textarea>
+      <div class="row" style="margin-top:10px">
+        <button id="btnJournal" class="btn">保存今天</button>
+        <span id="journalInfo" class="muted">未保存</span>
+      </div>
+    </section>
+
+    <!-- C. 100 字写作 -->
+    <section class="card">
+      <h2>100 字写作（点火+创造）</h2>
+      <p class="muted" id="prompt">提示加载中…</p >
+      <textarea id="draft" placeholder="自由写，不用完美。到 100 字自动完成。"></textarea>
+      <div class="bar"><i id="wordBar"></i></div>
+      <div class="row" style="margin-top:10px">
+        <span class="mono muted">字数：<b id="wc">0</b>/100</span>
+        <button id="btnClear" class="btn">清空</button>
+      </div>
+      <p class="muted">达标 + 🪐8, 🌊3</p >
+    </section>
+
+    <!-- D. 今日盲盒 -->
+    <section class="card">
+      <h2>今日盲盒（可变奖励）</h2>
+      <p class="muted">每天一次，可能掉落贴纸/额外积分/隐藏祝福</p >
+      <button id="btnRoll" class="btn">打开盲盒</button>
+      <p id="rollMsg" class="tw"></p >
+    </section>
+  </div>
+</div>
+
+<script>
+/* ========= 身份 & 命名空间 ========= */
+function getUser() {
+  const u = new URLSearchParams(location.search).get('u');
+  return (u && /^[a-z0-9_-]{1,20}$/i.test(u)) ? u.toLowerCase() : 'xinyue';
+}
+const USER = getUser();
+function nsKey(k){ return `du_${USER}_${k}`; }
+document.getElementById('whoText').textContent = `| 当前：@${USER}`;
+const sel = document.getElementById('userSel'); sel.value = USER;
+sel.addEventListener('change', ()=>{
+  const url = new URL(location.href);
+  url.searchParams.set('u', sel.value);
+  location.href = url.toString();
+});
+
+/* ========= 本地状态（localStorage） ========= */
+const todayKey = new Date().toISOString().slice(0,10);
+const S = JSON.parse(localStorage.getItem(nsKey('state'))||'{}');
+if(S.date!==todayKey){ S.date=todayKey; S.breathed=false; S.journal=false; S.roll=false; S._wDone=false; }
+S.spark = S.spark||0; S.flow=S.flow||0; S.soul=S.soul||0; S.streak=S.streak||0;
+function save(){ localStorage.setItem(nsKey('state'), JSON.stringify(S)); refreshKPI(); }
+function refreshKPI(){ qs('#k_spark').textContent=S.spark; qs('#k_flow').textContent=S.flow; qs('#k_soul').textContent=S.soul; qs('#k_streak').textContent=S.streak; }
+function qs(s){return document.querySelector(s)}
+function star(){ document.body.classList.add('starflash'); setTimeout(()=>document.body.classList.remove('starflash'),220); }
+
+/* streak：当天任意任务完成一次就记为续一天（按用户隔离） */
+function markStreakOnce(){
+  if(S._streakMarked===todayKey) return;
+  const last = localStorage.getItem(nsKey('last_day'));
+  const y = new Date(Date.now()-86400000).toISOString().slice(0,10);
+  if(last===y) S.streak = (S.streak||0)+1; else S.streak = 1;
+  localStorage.setItem(nsKey('last_day'), todayKey);
+  S._streakMarked=todayKey; save();
+}
+
+/* ========= A. 60s 呼吸 ========= */
+const btnBreathe = qs('#btnBreathe'), barA = qs('#breatheBar'), left = qs('#breatheLeft');
+let timerA=null, tLeft=60;
+function tickA(){
+  left.textContent = tLeft+'s';
+  barA.style.width = (100*(60-tLeft)/60)+'%';
+  if(tLeft<=0){ clearInterval(timerA); timerA=null; btnBreathe.disabled=false; left.textContent='完成！';
+    if(!S.breathed){ S.flow+=5; S.spark+=1; S.breathed=true; save(); star(); markStreakOnce(); }
+    return;
+  }
+  tLeft--;
+}
+btnBreathe.onclick = ()=>{
+  if(timerA) return;
+  tLeft=60; tickA(); timerA=setInterval(tickA,1000); btnBreathe.disabled=true;
+};
+
+/* ========= B. 三行日记 ========= */
+const j1=qs('#j1'), j2=qs('#j2'), j3=qs('#j3'), btnJ=qs('#btnJournal'), jInfo=qs('#journalInfo');
+function loadJournal(){
+  const k=nsKey('journal_'+todayKey);
+  const v=JSON.parse(localStorage.getItem(k)||'null');
+  if(v){ j1.value=v[0]; j2.value=v[1]; j3.value=v[2]; S.journal=true; btnJ.disabled=true; jInfo.textContent='✔ 已保存'; }
+}
+btnJ.onclick = ()=>{
+  const ok = [j1.value.trim(), j2.value.trim(), j3.value.trim()].filter(Boolean).length>=3;
+  if(!ok) { jInfo.textContent='先写满 3 行噢～'; return; }
+  localStorage.setItem(nsKey('journal_'+todayKey), JSON.stringify([j1.value,j2.value,j3.value]));
+  if(!S.journal){ S.flow+=4; S.soul+=3; S.journal=true; save(); star(); markStreakOnce(); }
+  btnJ.disabled=true; jInfo.textContent='✔ 已保存';
+};
+loadJournal();
+
+/* ========= C. 100 字写作 ========= */
+const prompts = [
+ "给 12 岁的自己写一封 100 字短信，只说一个勇敢瞬间。",
+ "把今晚的风描述成一种生物，让它开口说话。",
+ "如果你能在梦里见到一颗星，请写下你们 100 字的对话。",
+ "把“害怕”拆成三样可触摸的物件，再把它们放回口袋。",
+ "在另一个宇宙，今天的你会做哪一件小事？"
+];
+function dailyIndex(seed){
+  const d = new Date(), key = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}|${seed}`;
+  let h=2166136261; for(let i=0;i<key.length;i++){ h^=key.charCodeAt(i); h=Math.imul(h,16777619); }
+  return Math.abs(h)%prompts.length;
+}
+qs('#prompt').textContent = prompts[dailyIndex(USER)];
+
+const draft=qs('#draft'), wc=qs('#wc'), barW=qs('#wordBar'), btnClear=qs('#btnClear');
+function countWords(s){ return (s.trim().match(/\S+/g)||[]).length; }
+function renderWC(){
+  const n = countWords(draft.value); wc.textContent=n;
+  const p = Math.min(100, Math.round(100*n/100)); barW.style.width=p+'%';
+  if(n>=100 && !S._wDone){ S.soul+=8; S.flow+=3; S._wDone=true; save(); star(); markStreakOnce(); }
+}
+draft.addEventListener('input', renderWC);
+btnClear.onclick = ()=>{ draft.value=''; S._wDone=false; renderWC(); }
+renderWC();
+
+/* ========= 打字机（用于盲盒提示） ========= */
+async function typeText(el,msg,spd=28){ el.textContent=''; for(let i=0;i<msg.length;i++){ el.textContent=msg.slice(0,i+1); star(); await new Promise(r=>setTimeout(r,spd)); } }
+
+/* ========= D. 今日盲盒（每日一次，按用户隔离） ========= */
+const btnRoll=qs('#btnRoll'), rollMsg=qs('#rollMsg');
+const loot = [
+  {t:"获得贴纸：小火焰 🔥", act:()=>{S.spark+=2}},
+  {t:"额外积分：🌊 +2", act:()=>{S.flow+=2}},
+  {t:"额外积分：🪐 +2", act:()=>{S.soul+=2}},
+  {t:"隐藏祝福：你已被宇宙轻轻拥抱。", act:()=>{}},
+  {t:"再接再厉：送你一个深呼吸。", act:()=>{}},
+];
+function rollKey(){ return nsKey('roll_'+todayKey); }
+const rolled = localStorage.getItem(rollKey());
+if(rolled){ btnRoll.disabled=true; typeText(rollMsg, rolled); }
+btnRoll.onclick = async()=>{
+  if(localStorage.getItem(rollKey())) return;
+  const bag=[0,0,0,1,2,3,4][Math.floor(Math.random()*7)]; // 简单加权
+  const drop = loot[bag]; drop.act(); save(); star();
+  btnRoll.disabled=true;
+  localStorage.setItem(rollKey(), drop.t);
+  await typeText(rollMsg, drop.t);
+  markStreakOnce();
+};
+
+/* ========= 初始渲染 ========= */
+refreshKPI();
+</script>
+<a class="btn" id="linkflow" href="flow.html">🏠 Flow Console</a >
+<script>
+  // 统一带上身份参数
+  function getUser(){const u=new URLSearchParams(location.search).get('u');return (u&&/^[a-z0-9_-]{1,20}$/i.test(u))?u.toLowerCase():'xinyue'}
+  const USER = getUser();
+  document.getElementById('linkflow').href = `/?u=${USER}`;  // 👈 根路径，任何子目录都能回到首页
+</script>
+</body>
+</html>

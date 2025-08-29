@@ -97,11 +97,12 @@
 <nav>
   <a href="/explore.html">🪐探索入口</a>
   <a href="white-noise.html">🎧 白噪音混音舱</a>
+  <a href="meditation.html">🧘 冥想专属</a>
   <a href="dream.html">梦境星</a>
   <a href="echo.html">回应星</a>
   <a href="shop.html">商城星</a>
   <a href="gallery.html">Gallery</a>
- 
+
 </nav>
 </header>
 
@@ -181,28 +182,6 @@
 
 </script>
 
-<!-- 你已有的音频脚本 -->
-<script src="assets/js/mix-player.js?v=2"></script>
-<script>MixPlayer.init({ dock: true });</script>
-
-<!-- 根路径引用，避免 /white-noise 下相对路径 404 -->
-<script src="/assets/js/momo-lines.js"></script>
-<script>
-  // 1) 启动暖心文案轮播（挂到 #momo-line）
-  MomoLines.mount({
-    mount: '#momo-line',
-    interval: 6500,
-    random: true,
-    lines: [
-      { text: '把房间调成 0.3 的光，我们去森林里走一会。', bank:'forest', tag:'Dodva' },
-      { text: '让雨声洗洗今天的疲惫，我在旁边。',              bank:'rain',   tag:'Dodva' },
-      { text: '把担心交给海浪，慢慢退去 🌊',                      bank:'ocean',  tag:'Dodva' },
-      { text: '心跳与 528Hz 对齐，今晚更快入睡。',               bank:'relax',  tag:'Dodva' },
-      { text: '一次只做一件小事，已经很棒啦。',                   tag:'Dodva' },
-      { text: '你已经做得很好了，真的。',                        tag:'Dodva' }
-    ]
-  });
-  </script>
 <!-- 先引入依赖的 JS 文件 -->
 <script src="assets/js/momo-lines.js"></script>
 <script src="assets/js/mix-player.js"></script>
@@ -210,6 +189,42 @@
 <!-- 最后初始化 -->
 <script>
   MomoLines.init();
+</script>
+<!-- 宇宙入口：带身份参数 -->
+<nav id="dodva-portal" style="margin:10px 0; display:flex; gap:10px; flex-wrap:wrap"></nav>
+<script>
+  // 读取当前用户（?u=xxx），默认 xinyue
+  (function(){
+    function getUser() {
+      const u = new URLSearchParams(location.search).get('u');
+      return (u && /^[a-z0-9_-]{1,20}$/i.test(u)) ? u.toLowerCase() : 'xinyue';
+    }
+    const USER = getUser();
+    const uParam = `?u=${USER}`;
+    const portal = document.getElementById('dodva-portal');
+    if (portal) {
+      portal.innerHTML = `
+        <a class="btn" href="quantum.html ">🔮 Quantum 实验室</a >
+        <a class="btn" href="toys.html${uParam}">🧸 概念玩具柜</a >
+      `;
+    }
+  })();
+
+</script>
+<style>
+  /* 首帧不做动画/过渡，避免闪烁 */
+  .preload *, .preload *::before, .preload *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  /* 立刻给页面底色，避免FOUC */
+  html { background:#0b0b12; color:#eaeaff; }
+</style>
+<script>
+  document.documentElement.classList.add('preload');
+  window.addEventListener('load', () => {
+    document.documentElement.classList.remove('preload');
+  });
 </script>
 </body>
 </html>

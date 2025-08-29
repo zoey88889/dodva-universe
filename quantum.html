@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+ <nav style="margin:10px 0; display:flex; gap:10px; flex-wrap:wrap">
+  <a class="btn" href=" ">Quantum 实验室</a >
+  <a class="btn" href="toys.html?u=xinyue">DODVA 概念玩具柜</a >
+</nav>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Dodva Quantum Playground · 双缝 × 延迟选择</title>
+<style>
+  :root{--bg:#07070c;--ink:#eaeaff;--mut:#9aa0b3;--panel:#111222;--line:#2a2f48;--glow:#9f8fff}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  .wrap{max-width:1100px;margin:0 auto;padding:18px 14px}
+  h1{margin:6px 0 10px;font-size:22px}
+  .mut{color:var(--mut);font-size:13px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 12px 14px;box-shadow:0 8px 28px rgba(0,0,0,.35)}
+  .grid{display:grid;gap:12px;grid-template-columns:1.1fr .9fr}
+  .controls{display:grid;gap:10px}
+  .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .btn{cursor:pointer;border:1px solid #394056;background:transparent;color:var(--ink);
+       border-radius:10px;padding:7px 12px}
+  .btn[disabled]{opacity:.6;cursor:not-allowed}
+  input[type="range"]{width:160px}
+  .tag{border:1px solid #394056;border-radius:999px;padding:2px 8px;font-size:12px}
+  canvas{width:100%;height:520px;background:radial-gradient(450px 300px at 50% 30%,rgba(255,255,255,.06),transparent 60%)}
+  .small{font-size:12px}
+  /* 心形粒子 */
+  .hearts{position:fixed;left:0;top:0;right:0;bottom:0;pointer-events:none;overflow:hidden}
+  .heart{position:absolute;bottom:12%;font-size:18px;opacity:.9;animation:rise 1.6s ease-out forwards}
+  @keyframes rise{from{transform:translateY(0) scale(.9);opacity:.9} to{transform:translateY(-220px) scale(1.4);opacity:0}}
+  /* 星光闪 */
+  body.flash{background:
+    radial-gradient(1200px 600px at 50% 50%,rgba(255,255,255,.09),transparent 40%) no-repeat var(--bg);
+    transition:background .25s ease}
+  details{margin-top:10px}
+  summary{cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Dodva Quantum Playground ✨ <span class="mut">像玩游戏一样思考物理与创造</span></h1>
+
+  <div class="grid">
+    <!-- 左：画布 -->
+    <section class="panel">
+      <canvas id="screen" width="900" height="520"></canvas>
+      <div class="row" style="justify-content:space-between;margin-top:8px">
+        <div class="row small">
+          <span class="tag">击中数 <b id="hits">0</b></span>
+          <span class="tag">模式 <b id="modeText">波（干涉）</b></span>
+          <span class="tag">延迟帧 <b id="delayText">12</b></span>
+        </div>
+        <div class="row">
+          <button class="btn" id="btnReset">重置</button>
+          <button class="btn" id="btnShot">保存截图</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 右：控制台 -->
+    <section class="panel controls">
+      <div class="row">
+        <label><input type="checkbox" id="observe"> 观察（开＝两条条纹 / 关＝干涉）</label>
+      </div>
+      <div class="row">
+        <label class="small">每秒发射：<b id="rateVal">800</b></label>
+        <input type="range" id="rate" min="50" max="2000" step="50" value="800">
+      </div>
+      <div class="row">
+        <label class="small">飞行时间（延迟选择）：<b id="delayVal">12 帧</b></label>
+        <input type="range" id="delay" min="0" max="40" step="1" value="12">
+      </div>
+      <div class="row">
+        <button class="btn" id="toggleRun">暂停</button>
+        <button class="btn" id="toggleDelayed">延迟选择：此刻翻转观察</button>
+      </div>
+
+      <hr style="border:none;border-top:1px solid #2a2f48;width:100%">
+
+      <div>
+        <div class="small mut" style="margin-bottom:6px">给宇宙写一句话（输入“我爱…”触发彩蛋）</div>
+        <div class="row">
+          <input id="intention" placeholder="如：我爱 Dodva" style="flex:1;min-width:180px;border:1px solid #2a2f48;background:#0f0f17;color:#eaeaff;border-radius:10px;padding:8px">
+          <button class="btn" id="say">从未来观察</button>
+        </div>
+        <div id="msg" class="small mut" style="margin-top:6px;min-height:18px"></div>
+      </div>
+
+      <details>
+        <summary>这在说啥？（科普简述）</summary>
+        <p class="small mut">
+          这是一个概念玩具：<br>
+          关闭“观察”≈ 显示干涉条纹（波的样子）；打开“观察”≈ 两条条纹（粒子的样子）。<br>
+          “延迟选择”让你在粒子“飞行途中”再决定是否观察，看看屏幕上随之变化的分布。<br>
+          它不是严格实验，只是帮助我们把“选择影响结果”的直觉种到心里：你对未来的选择，会改变你现在的路径选择和注意力，进而改变“你看到的现实”。🫶
+        </p >
+      </details>
+    </section>
+  </div>
+</div>
+
+<!-- 粒子特效 -->
+<div class="hearts" id="hearts"></div>
+
+<script>
+/* ====== 画布与状态 ====== */
+const cvs = document.getElementById('screen');
+const ctx = cvs.getContext('2d');
+ctx.fillStyle = 'rgba(0,0,0,1)';
+ctx.fillRect(0,0,cvs.width,cvs.height);
+ctx.globalCompositeOperation = 'lighter';
+
+const hitsEl = document.getElementById('hits');
+const modeText = document.getElementById('modeText');
+const delayText = document.getElementById('delayText');
+const rate = document.getElementById('rate');
+const rateVal = document.getElementById('rateVal');
+const delay = document.getElementById('delay');
+const delayVal = document.getElementById('delayVal');
+const observe = document.getElementById('observe');
+const toggleRun = document.getElementById('toggleRun');
+const toggleDelayed = document.getElementById('toggleDelayed');
+const btnReset = document.getElementById('btnReset');
+const btnShot = document.getElementById('btnShot');
+const msg = document.getElementById('msg');
+
+let running = true;
+let totalHits = 0;
+let delayFrames = +delay.value;     // “飞行时间”
+let emitPerSec = +rate.value;       // 每秒发射
+let observeNow = false;             // 是否观察
+const pipeline = [];                // 长度 = delayFrames；队列法实现延迟选择
+let lastTime = performance.now();
+
+/* 初始化管线 */
+function ensurePipeline(){
+  while (pipeline.length < delayFrames) pipeline.push(0);
+  while (pipeline.length > delayFrames) pipeline.shift();
+}
+ensurePipeline();
+
+/* UI 文本 */
+function refreshUI(){
+  rateVal.textContent = emitPerSec;
+  delayVal.textContent = delayFrames + ' 帧';
+  delayText.textContent = delayFrames;
+  modeText.textContent = observeNow ? '粒子（两条）' : '波（干涉）';
+  hitsEl.textContent = totalHits;
+}
+refreshUI();
+
+/* ====== 分布函数 & 采样 ====== */
+// 归一化高斯
+function gauss(x, mu, sigma){ const d=x-mu; return Math.exp(-0.5*(d*d)/(sigma*sigma)); }
+
+// 两缝参数（相对画布宽度）
+const L = 1;             // 屏宽归一化
+const slit1 = 0.35, slit2 = 0.65;
+const envSigma = 0.18;   // 包络宽
+const fringeFreq = 18;   // 干涉条纹频率（试着改更密/更疏）
+
+// 强度：观察＝两条高斯；不观察＝干涉（带包络）
+function intensityObserved(x){
+  return gauss(x, slit1, 0.04) + gauss(x, slit2, 0.04);
+}
+function intensityWave(x){
+  const A1 = Math.sqrt(gauss(x, slit1, envSigma));
+  const A2 = Math.sqrt(gauss(x, slit2, envSigma));
+  const phase = Math.cos(2*Math.PI*fringeFreq*x);
+  return (A1*A1 + A2*A2 + 2*A1*A2*phase); // 叠加 + 干涉
+}
+
+// 为当前模式预计算 CDF（逆变换采样）
+let cdfObs = buildCDF(true);
+let cdfWave = buildCDF(false);
+
+function buildCDF(isObs){
+  const N = 1200;
+  const pdf = new Float32Array(N);
+  let sum = 0;
+  for(let i=0;i<N;i++){
+    const x = i/(N-1);
+    const v = Math.max(0, isObs ? intensityObserved(x) : intensityWave(x));
+    pdf[i] = v; sum += v;
+  }
+  // 归一化 & 累积
+  const cdf = new Float32Array(N);
+  let acc = 0;
+  for(let i=0;i<N;i++){ acc += pdf[i]/sum; cdf[i] = acc; }
+  return cdf;
+}
+
+function sampleX(cdf){
+  const r = Math.random();
+  // 二分查找
+  let lo=0, hi=cdf.length-1;
+  while(lo<hi){
+    const mid = (lo+hi)>>1;
+    if(cdf[mid] < r) lo = mid+1; else hi = mid;
+  }
+  const x = lo/(cdf.length-1);
+  return x;
+}
+
+/* ====== 发射 & 命中绘制 ====== */
+function emit(dt){
+  // dt 秒内应发射多少
+  const n = Math.max(1, Math.floor(emitPerSec * dt));
+  pipeline.push(n);
+  if (pipeline.length > delayFrames) {
+    const landed = pipeline.shift();  // 这些“到屏幕了”
+    hit(landed);
+  }
+}
+
+function hit(n){
+  const cdf = observeNow ? cdfObs : cdfWave;
+  for(let i=0;i<n;i++){
+    const x = sampleX(cdf);
+    const y = 0.5 + (Math.random()-0.5)*0.18; // 竖向轻微抖动
+    drawHit(x,y);
+  }
+  totalHits += n;
+}
+
+function drawHit(nx, ny){
+  const x = Math.max(0, Math.min(cvs.width-1, Math.floor(nx*cvs.width)));
+  const y = Math.max(0, Math.min(cvs.height-1, Math.floor(ny*cvs.height)));
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.fillRect(x-1, y-6, 2, 12); // 细竖条，像感光板颗粒
+}
+
+/* ====== 动画主循环 ====== */
+function loop(t){
+  const dt = Math.max(0, (t - lastTime) / 1000);
+  lastTime = t;
+  if (running){
+    emit(dt);
+    refreshUI();
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ====== 交互 ====== */
+observe.addEventListener('change', ()=>{
+  observeNow = observe.checked;
+  flashBG();
+  refreshUI();
+});
+
+rate.addEventListener('input', ()=>{ emitPerSec = +rate.value; refreshUI(); });
+delay.addEventListener('input', ()=>{
+  delayFrames = +delay.value;
+  ensurePipeline();
+  flashBG();
+  refreshUI();
+});
+
+toggleRun.addEventListener('click', ()=>{
+  running = !running;
+  toggleRun.textContent = running ? '暂停' : '继续';
+});
+
+toggleDelayed.addEventListener('click', ()=>{
+  // “在路上再改变主意”：此刻翻转观察状态
+  observeNow = !observeNow;
+  observe.checked = observeNow;
+  flashBG();
+  refreshUI();
+});
+
+btnReset.addEventListener('click', ()=>{
+  ctx.clearRect(0,0,cvs.width,cvs.height);
+  ctx.fillStyle = 'rgba(0,0,0,1)';
+  ctx.fillRect(0,0,cvs.width,cvs.height);
+  totalHits = 0;
+  pipeline.length = 0;
+  ensurePipeline();
+  flashBG();
+  refreshUI();
+});
+
+btnShot.addEventListener('click', ()=>{
+  const a = document.createElement('a');
+  a.download = 'dodva-quantum.png';
+  a.href = cvs.toDataURL('image/png');
+  a.click();
+});
+
+/* ====== 爱的彩蛋：输入“我爱…”触发 ====== */
+const hearts = document.getElementById('hearts');
+const say = document.getElementById('say');
+const intention = document.getElementById('intention');
+
+say.addEventListener('click', ()=>{
+  const text = (intention.value||'').trim();
+  if(!text){ setMsg('写给宇宙的一句话，越具体越有力。'); return; }
+  setMsg('已接收：' + text);
+  if(/^我爱.+/.test(text)){ burstHearts(); flashBG(); setMsg('宇宙加速回应中：💙 +5 爱的能量'); }
+});
+
+function burstHearts(n=16){
+  for(let i=0;i<n;i++){
+    const e = document.createElement('div');
+    e.className='heart';
+    e.textContent = Math.random()<.5 ? '💙' : '💫';
+    e.style.left = (10 + Math.random()*80) + 'vw';
+    e.style.fontSize = (16+Math.random()*18)+'px';
+    e.style.animationDuration = (1.2 + Math.random()*0.9)+'s';
+    hearts.appendChild(e);
+    setTimeout(()=>e.remove(), 1800);
+  }
+}
+
+function flashBG(){
+  document.body.classList.add('flash');
+  setTimeout(()=>document.body.classList.remove('flash'), 250);
+}
+
+function setMsg(t){ msg.textContent = t; }
+
+/* ====== 初状态 ====== */
+observe.checked = observeNow;
+refreshUI();
+</script>
+</body>
+</html>
