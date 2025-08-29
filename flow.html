@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head><meta charset="UTF-8">
-  <a class="btn" href=" ">Quantum 实验室</a >
+  <a class="btn" href="quantum.html">Quantum 实验室</a >
   <a class="btn" href="toys.html?u=xinyue">DODVA 概念玩具柜</a >
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -42,7 +42,7 @@
 <body>
 <div class="wrap">
   <div class="topbar">
-    <h1>Dodva Flow Console ✨ <span id="whoText" class="muted"></span></h1>
+    <h1>Dodva 多巴胺学习室 ✨ <span id="whoText" class="muted"></span></h1>
     <div class="who">
       <span class="muted">切换身份</span>
       <select id="userSel">
@@ -228,15 +228,5 @@ btnRoll.onclick = async()=>{
   markStreakOnce();
 };
 
-/* ========= 初始渲染 ========= */
-refreshKPI();
-</script>
-<a class="btn" id="linkflow" href="flow.html">🏠 Flow Console</a >
-<script>
-  // 统一带上身份参数
-  function getUser(){const u=new URLSearchParams(location.search).get('u');return (u&&/^[a-z0-9_-]{1,20}$/i.test(u))?u.toLowerCase():'xinyue'}
-  const USER = getUser();
-  document.getElementById('linkflow').href = `/?u=${USER}`;  // 👈 根路径，任何子目录都能回到首页
-</script>
 </body>
 </html>
