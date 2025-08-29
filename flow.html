@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head><meta charset="UTF-8">
+<head>
+ <nav style="margin:10px 0; display:flex; gap:10px; flex-wrap:wrap">
   <a class="btn" href="quantum.html">Quantum 实验室</a >
   <a class="btn" href="toys.html">DODVA 概念玩具柜</a >
+</nav>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Dodva Universe · Flow Console (Multi)</title>
+<title>Dodva Universe · 多巴胺学习室</title>
 <style>
   :root{--bg:#0b0b12;--card:#12121b;--ink:#eaeaff;--muted:#9aa0b3;--acc:#8ef;--ok:#9f8fff}
   html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial}
@@ -59,7 +61,7 @@
     <span class="pill">🪐 Soul <b id="k_soul">0</b></span>
     <span class="pill ok">🔥 Streak <b id="k_streak">0</b>d</span>
   </div>
-  <footer>© 2025 Dodva Universe Co️nnect ®🌌 创造·连接·无限·永恒 ∞</footer>
+
   <div class="grid">
     <!-- A. 1分钟呼吸 -->
     <section class="card">
@@ -106,9 +108,8 @@
       <p id="rollMsg" class="tw"></p >
     </section>
   </div>
-
 </div>
-
+<footer>© 2025 Dodva Universe Co️nnect ®🌌 创造·连接·无限·永恒 ∞</footer>
 <script>
 /* ========= 身份 & 命名空间 ========= */
 function getUser() {
@@ -208,7 +209,6 @@ renderWC();
 async function typeText(el,msg,spd=28){ el.textContent=''; for(let i=0;i<msg.length;i++){ el.textContent=msg.slice(0,i+1); star(); await new Promise(r=>setTimeout(r,spd)); } }
 
 /* ========= D. 今日盲盒（每日一次，按用户隔离） ========= */
-
 const btnRoll=qs('#btnRoll'), rollMsg=qs('#rollMsg');
 const loot = [
   {t:"获得贴纸：小火焰 🔥", act:()=>{S.spark+=2}},
@@ -230,6 +230,9 @@ btnRoll.onclick = async()=>{
   markStreakOnce();
 };
 
-<body>
-<script>
+/* ========= 初始渲染 ========= */
+refreshKPI();
+</script>
+
+</body>
 </html>
