@@ -1,272 +1,203 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<!DOCTYPE html><html lang="zh-CN"><head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>DODVA 概念玩具柜 · VOL.1</title>
-
 <style>
   :root{--bg:#0b0b12;--card:#12121b;--ink:#eaeaff;--mut:#9aa0b3;--line:#2a2f48}
   html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial}
   .wrap{max-width:1000px;margin:0 auto;padding:20px 14px}
   h1{margin:0 0 10px;font-size:22px}
   .mut{color:var(--mut);font-size:13px}
-  .kpi{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 12px}
-  .pill{border:1px solid #394056;border-radius:999px;padding:2px 8px;font-size:12px}
-  nav a.btn{border:1px solid #394056;border-radius:10px;padding:6px 10px;color:var(--ink);text-decoration:none}
+  nav a.btn,.btn{border:1px solid #394056;border-radius:10px;padding:7px 12px;color:var(--ink);text-decoration:none;background:transparent;cursor:pointer}
   .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 8px 26px rgba(0,0,0,.35)}
-  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  .btn{cursor:pointer;border:1px solid #394056;background:transparent;color:var(--ink);border-radius:10px;padding:7px 12px}
-  textarea,input,canvas{width:100%}
-  textarea,input{border:1px solid var(--line);background:#0f0f17;color:var(--ink);border-radius:10px;padding:8px}
-  canvas{height:180px;background:radial-gradient(300px 200px at 50% 50%,rgba(255,255,255,.06),transparent 60%)}
-  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-  body.flash{background:radial-gradient(900px 500px at 50% 50%,rgba(255,255,255,.08),transparent 40%) no-repeat var(--bg);transition:background .25s}
-  .hearts{position:fixed;left:0;top:0;right:0;bottom:0;pointer-events:none}
-  .heart{position:absolute;bottom:12%;font-size:18px;opacity:.9;animation:rise 1.6s ease-out forwards}
-  @keyframes rise{from{transform:translateY(0) scale(.9);opacity:.9} to{transform:translateY(-220px) scale(1.4);opacity:0}}
-
-  /* ===== 黑洞实验：只动 #app/#appInner，不动 body ===== */
-  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
-  #app.shake { animation: shake .4s ease-in-out 3; will-change: transform; }
-
-  @keyframes suckAll { to { transform: scale(.02) rotate(540deg); opacity:0 } }
-  #appInner.suck { animation: suckAll .9s ease forwards; will-change: transform, opacity; transform-origin: 50% 50%; }
-
-  #singularity{ position:fixed; inset:0; pointer-events:none; z-index:9999; display:none; opacity:0;
-    background: radial-gradient(120px 120px at 50% 55%, rgba(0,0,0,0) 0%, rgba(0,0,0,.55) 40%, rgba(0,0,0,.9) 70%, #000 85%);
-    transition: opacity .2s ease;
-  }
-  #singularity.show{ display:block; opacity:1; }
-  @keyframes flashWhite { 0%{background:#fff;opacity:1} 100%{background:transparent;opacity:0} }
-  #singularity.flash{ animation: flashWhite .6s ease; }
-
-  @media (prefers-reduced-motion: reduce){
-    #app.shake{ animation:none }
-    #appInner.suck{ animation:none; opacity:0; transition:opacity .2s }
-  }
-
-  /* ===== Toast（温柔提示） ===== */
-  #dodva-notices{
-    position: fixed; right: 16px; bottom: 16px; z-index: 10000;
-    display: flex; flex-direction: column; gap: 10px; max-width: 320px;
-    pointer-events: none;
-  }
-  .dv-toast{
-    pointer-events: auto; display:grid; grid-template-columns: 24px 1fr auto; gap:8px; align-items:start;
-    background: rgba(14,14,22,.92); border:1px solid #3b3f59; color:#eaeaff;
-    border-radius:12px; padding:10px 12px; box-shadow:0 10px 28px rgba(0,0,0,.45);
-    transform: translateY(12px); opacity:0; animation: dvIn .18s ease forwards;
-  }
-  .dv-ico{font-size:18px}
-  .dv-title{font-size:14px; font-weight:600; margin:0 0 2px}
-  .dv-text{font-size:13px; color:#b8bed1; margin:0}
-  .dv-close{border:0;background:transparent;color:#b8bed1;cursor:pointer;font-size:16px}
-  .dv-toast.warning{ border-color:#55518a }
-  .dv-toast.info{ border-color:#3d556a }
-  .dv-toast.success{ border-color:#3d6a55 }
-  @keyframes dvIn{ to{ transform:none; opacity:1 } }
-  @keyframes dvOut{ to{ transform: translateY(12px); opacity:0 } }
+  .thumb{height:120px;border:1px dashed #2a2f48;border-radius:10px;display:flex;align-items:center;justify-content:center;opacity:.9}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
 </style>
-</head>
-<body>
-
-<!-- 只包裹主要内容，方便“吸入”而不清空页面 -->
-<main id="app">
-  <div id="appInner">
-    <div class="wrap">
-      <div class="row" style="justify-content:space-between">
-        <h1>DODVA 概念玩具柜 · VOL.1 <span id="who" class="mut"></span></h1>
-        <nav style="display:flex;gap:10px">
-          <a class="btn" id="linkflow" href="flow.html">🏠 多巴胺学习室</a >
-          <a class="btn" id="linkQuantum" href="quantum.html">🔮 Quantum 实验室</a >
-        </nav>
-      </div>
-
-      <!-- KPI -->
-      <div class="kpi">
-        <span class="pill">⚡ Spark <b id="k_spark">0</b></span>
-        <span class="pill">🌊 Flow <b id="k_flow">0</b></span>
-        <span class="pill">🪐 Soul <b id="k_soul">0</b></span>
-        <span class="pill">🔥 Streak <b id="k_streak">0</b>d</span>
-      </div>
-      <footer>© 2025 Dodva Universe Co️nnect ®🌌 创造·连接·无限·永恒 ∞</footer>
-      <div class="grid">
-        <!-- 1. 量子骰子 -->
-        <section class="card">
-          <h3>🎲 量子骰子</h3>
-          <p class="mut">点击掷骰，抽一条「平行宇宙的你」。首次当日 + ⚡1</p >
-          <button class="btn" id="roll">掷一下</button>
-          <div id="diceOut" class="mono" style="margin-top:6px;min-height:20px"></div>
-        </section>
-
-        <!-- 2. 干涉条纹灯 -->
-        <section class="card">
-          <h3>🌊 干涉条纹灯</h3>
-          <p class="mut">输入心情 → 生成今日条纹卡，保存一次 + 🪐1</p >
-          <input id="mood" placeholder="此刻心情（可中文）">
-          <div class="row"><input type="range" id="freq" min="6" max="28" step="1" value="16"><span class="mut">频率</span></div>
-          <canvas id="lamp" width="500" height="180"></canvas>
-          <button class="btn" id="saveLamp">保存条纹卡</button>
-        </section>
-
-        <!-- 3. 显化沙漏 -->
-        <section class="card">
-          <h3>⏳ 显化沙漏（60s）</h3>
-          <p class="mut">写一句微愿望，倒计时结束 + 🌊3, 🪐1</p >
-          <input id="wish" placeholder="例如：今晚写完 100 字">
-          <div class="row"><button class="btn" id="startHour">开始</button><span id="left" class="mut mono">—</span></div>
-          <div id="hourMsg" class="mut" style="min-height:18px"></div>
-        </section>
-
-        <!-- 4. 爱塌缩按钮 -->
-        <section class="card">
-          <h3>💙 爱塌缩按钮</h3>
-          <p class="mut">点一下，让心形粒子雨落下。每次 + ⚡2</p >
-          <button class="btn" id="love">我爱 Dodva</button>
-        </section>
-
-        <!-- 5. 宇宙塌缩实验 -->
-        <section class="card">
-          <h3>🕳️ 宇宙塌缩实验</h3>
-          <p class="mut">点击触发 → 轻微抖动 → 元素吸入黑洞 → 白光一闪 → 页面保持。</p >
-          <button class="btn" id="collapseBtn">触发塌缩</button>
-        </section>
-      </div>
-    </div>
+</head><body>
+<div class="wrap">
+  <div class="row" style="justify-content:space-between;align-items:center">
+    <h1>DODVA 概念玩具柜 · VOL.1</h1>
+    <nav class="row">
+      <a class="btn" href="arcade.html>🎮 Dodva Arcade（实验室合集）</a >
+      <a class="btn" href="quantum.html">🔮 Quantum 实验室</a >
+      <a class="btn" href="flow.html">🏠 多巴胺学习室</a >
+    </nav>
   </div>
-</main>
-
-<!-- 黑洞幕布 & 飘心层 & Toast 容器 -->
-<div id="singularity" aria-hidden="true"></div>
-<div class="hearts" id="hearts"></div>
-<div id="dodva-notices" aria-live="polite" aria-atomic="true"></div>
-
+<!-- 顶部解锁条 -->
+<div id="unlockBanner" style="margin:14px 0; padding:12px; border:1px dashed #3b3f59; border-radius:12px; background:#0f0f17; color:#eaeaff; display:none">
+  🎁 <b>Dodva 玩具柜 · 全部解锁 ¥299</b>
+  <button id="openPaywall" style="margin-left:10px; border:1px solid #3b3f59; background:#12121b; color:#eaeaff; border-radius:10px; padding:6px 10px; cursor:pointer">立即解锁</button>
+</div>
 <script>
-/* ===== 工具函数 & 状态 ===== */
-const $ = s => document.querySelector(s);
-const S = {spark:0,flow:0,soul:0,streak:0};
-function refresh(){ $('#k_spark').textContent=S.spark; $('#k_flow').textContent=S.flow; $('#k_soul').textContent=S.soul; $('#k_streak').textContent=S.streak; }
-refresh();
-
-/* ===== Toast API ===== */
 (function(){
-  const HOST = document.getElementById('dodva-notices');
-  const ICON = { warning:'💙', info:'✨', success:'🌟' };
-  window.dToast = function(kind='info', title='提示', text='', ms=2600){
-    const el = document.createElement('div');
-    el.className = `dv-toast ${kind}`;
-    el.innerHTML = `
-      <div class="dv-ico">${ICON[kind]||'✨'}</div>
-      <div><div class="dv-title">${title}</div><p class="dv-text">${text}</p ></div>
-      <button class="dv-close" aria-label="关闭">×</button>
-    `;
-    HOST.appendChild(el);
-    let timer = setTimeout(close, ms);
-    el.querySelector('.dv-close').onclick = close;
-    el.onmouseenter = ()=>{ clearTimeout(timer); };
-    el.onmouseleave = ()=>{ timer = setTimeout(close, 1200); };
-    function close(){ el.style.animation='dvOut .18s ease forwards'; setTimeout(()=>el.remove(), 180); }
-  };
-})();
+  const overlay = document.getElementById('dv-overlay');
+  const frame   = document.getElementById('dv-frame');
+  const closeBt = document.getElementById('dv-close');
+  let lastFocus = null;
 
-/* ===== 1) 量子骰子 ===== */
-const outcomes=[
-  "平行宇宙的你正在写第 101 个字。",
-  "未来的你在看今晚的星，心很安静。",
-  "你把害怕折成纸鹤，放进口袋。",
-  "你把“必须”改成“我选择”。",
-  "山在往你这边移动。"
-];
-$('#roll').onclick=()=>{
-  $('#diceOut').textContent = "🎲 " + outcomes[Math.floor(Math.random()*outcomes.length)];
-  S.spark+=1; refresh();
-};
-
-/* ===== 2) 干涉条纹灯 ===== */
-const lamp=$('#lamp'), ctx=lamp.getContext('2d');
-function hashMood(s){ let h=2166136261; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return (h>>>0)/4294967295*Math.PI*2; }
-function drawLamp(){
-  const mood=($('#mood').value||'mood').trim(); const freq=+$('#freq').value;
-  ctx.clearRect(0,0,lamp.width,lamp.height); ctx.fillStyle='rgba(255,255,255,0.9)';
-  for(let x=0;x<lamp.width;x++){
-    const nx=x/lamp.width;
-    const A1=Math.exp(-Math.pow(nx-0.35,2)/0.04);
-    const A2=Math.exp(-Math.pow(nx-0.65,2)/0.04);
-    const phase=Math.cos(2*Math.PI*freq*nx + hashMood(mood));
-    const I=Math.max(0,(A1+A2+2*Math.sqrt(A1*A2)*phase));
-    const h=I*lamp.height*0.45; ctx.fillRect(x,(lamp.height-h)/2,1,h);
+  function openGame(hash){ // hash 形如 #game-dice/#game-hourglass ...
+    lastFocus = document.activeElement;
+    document.body.style.overflow='hidden';
+    frame.src = `arcade.html?embed=1${hash||''}`;
+    overlay.style.display='block';
+    overlay.setAttribute('aria-hidden','false');
+    closeBt.focus();
   }
-}
-$('#mood').addEventListener('input',drawLamp);
-$('#freq').addEventListener('input',drawLamp);
-drawLamp();
-$('#saveLamp').onclick=()=>{ const a=document.createElement('a'); a.download=`stripe-${Date.now()}.png`; a.href=lamp.toDataURL('image/png'); a.click(); S.soul+=1; refresh(); dToast('success','已保存','今日条纹卡 +🪐1'); };
-
-/* ===== 3) 显化沙漏（60s） ===== */
-let t=null,left=60;
-$('#startHour').onclick=()=>{
-  if(t) return;
-  left=60; $('#left').textContent=left+'s'; $('#hourMsg').textContent='';
-  t=setInterval(()=>{
-    left--; $('#left').textContent=left+'s';
-    if(left<=0){ clearInterval(t); t=null; $('#left').textContent='完成！';
-      $('#hourMsg').textContent='未来的你收到了：'+($('#wish').value||'一个小愿望');
-      S.flow+=3; S.soul+=1; refresh(); dToast('success','小愿望已签收','+🌊3, +🪐1'); }
-  },1000);
-};
-
-/* ===== 4) 爱塌缩按钮（飘心） ===== */
-const hearts = document.getElementById('hearts');
-$('#love').onclick=()=>{ burstHearts(16); S.spark+=2; refresh(); dToast('info','收到你的爱','+⚡2'); };
-function burstHearts(n){
-  for(let i=0;i<n;i++){
-    const e=document.createElement('div');
-    e.className='heart'; e.textContent = Math.random()<.5?'💙':'💫';
-    e.style.left = (10 + Math.random()*80) + 'vw';
-    e.style.fontSize = (16+Math.random()*18)+'px';
-    e.style.animationDuration = (1.2 + Math.random()*0.9)+'s';
-    hearts.appendChild(e); setTimeout(()=>e.remove(),1800);
+  function closeGame(){
+    document.body.style.overflow='';
+    overlay.style.display='none';
+    overlay.setAttribute('aria-hidden','true');
+    frame.src='about:blank';
+    lastFocus && lastFocus.focus();
   }
-}
 
-/* ===== 5) 宇宙塌缩实验（改良：不清空 DOM） ===== */
-(function(){
-  const btn = document.getElementById('collapseBtn');
-  const app = document.getElementById('app');
-  const inner = document.getElementById('appInner');
-  const hole = document.getElementById('singularity');
-  if(!btn||!app||!inner||!hole) return;
+  // 点击遮罩或 × 关闭
+  overlay.addEventListener('click', e=>{ if(e.target===overlay) closeGame(); });
+  closeBt.addEventListener('click', closeGame);
+  // ESC 关闭
+  window.addEventListener('keydown', e=>{ if(e.key==='Escape' && overlay.style.display==='block') closeGame(); });
 
-  let running = false;
-  btn.addEventListener('click', ()=>{
-    if (running) return; running = true;
-
-    // 1) 幕布出现 + app 轻抖
-    hole.classList.add('show');
-    setTimeout(()=> app.classList.add('shake'), 120);
-
-    // 2) 吸入（inner），与抖动重叠，缩短体感时长
-    setTimeout(()=> inner.classList.add('suck'), 600);
-
-    // 3) 白光一闪
-    setTimeout(()=> hole.classList.add('flash'), 1200);
-
-    // 4) 复位（不清空 DOM）：去类名 → 轻提示 → 还原透明度
-    setTimeout(()=>{
-      app.classList.remove('shake');
-      inner.classList.remove('suck');
-      hole.classList.remove('flash','show');
-      hole.style.display='none'; void inner.offsetHeight;
-      running = false;
-      dToast('success','重启完成','Dodva 下一纪元已开启 ✨');
-    }, 1800);
+  // 绑定所有“去玩”按钮（在 toy.html 的卡片上加 data-game 属性即可）
+  document.querySelectorAll('[data-open-game]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.getAttribute('data-open-game'); // 如 game-dice
+      openGame('#'+id);
+    });
   });
 
-  // show → 打开显示；避免首次无显
-  const mo = new MutationObserver(()=>{ if (hole.classList.contains('show')) hole.style.display='block'; });
-  mo.observe(hole,{attributes:true,attributeFilter:['class']});
+  // 暴露一个全局方法，万一你想从别的地方打开
+  window.openDodvaGame = openGame;
+})();
+</script>
+</div>
+<!-- ========== 仅展示卡面：给要锁的卡外层加 data-locked 和 .locked ========== -->
+<div class="grid" id="toyGrid">
+  <!-- 示例卡面（你把封面图、标题换成自己的） -->
+  <section class="card locked" data-locked>
+    <div class="cover" style="height:140px;border-radius:10px;background:#12121b url(assets/covers/dice.png) center/cover no-repeat"></div>
+    <h3 style="margin:10px 0 6px">🎲 量子骰子（Pro 版）</h3>
+    <p class="mut" style="margin:0">解锁后可游玩 · 含高级签语池</p >
+  </section>
+
+  <section class="card locked" data-locked>
+    <div class="cover" style="height:140px;border-radius:10px;background:#12121b url(assets/covers/hourglass.png) center/cover no-repeat"></div>
+    <h3 style="margin:10px 0 6px">⏳ 60 秒心愿沙漏</h3>
+    <p class="mut" style="margin:0">解锁后自动记录 streak & 徽章</p >
+  </section>
+
+  <section class="card locked" data-locked>
+    <div class="cover" style="height:140px;border-radius:10px;background:#12121b url(assets/covers/garden.png) center/cover no-repeat"></div>
+    <h3 style="margin:10px 0 6px">🌱 AI 小花园（进阶）</h3>
+    <p class="mut" style="margin:0">每日浇水成长 · 皮肤可定制</p >
+  </section>
+
+  <section class="card locked" data-locked>
+    <div class="cover" style="height:140px;border-radius:10px;background:#12121b url(assets/covers/tetris.png) center/cover no-repeat"></div>
+    <h3 style="margin:10px 0 6px">🧩 Dodva 方块疗愈</h3>
+    <p class="mut" style="margin:0">支持手柄/键鼠 · 多主题</p >
+  </section>
+</div>
+
+
+
+<!-- 弹层：付款 + 兑换码 -->
+<div id="paywall" style="position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(6px);display:none;z-index:99999;">
+  <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(92vw,520px);background:#0b0b12;border:1px solid #2a2f48;border-radius:16px;box-shadow:0 22px 60px rgba(0,0,0,.55);padding:18px">
+    <h2 style="margin:0 0 6px">🎁 Dodva 玩具柜 · 解锁全套</h2>
+    <div style="color:#b8bed1;font-size:14px;line-height:1.6;margin-bottom:12px">
+      一次购买，解锁 <b>全部小游戏</b> 与后续升级（当前价：<b>¥299</b>）。<br/>方式：<b>微信 / 支付宝</b>，完成后输入 <b>12 位兑换码</b> 解锁并自动跳转。
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div style="border:1px solid #2a2f48;border-radius:12px;padding:10px;text-align:center">
+        <div style="font-size:12px;color:#9aa0b3">微信收款码</div>
+        <img src="/Users/xinyuecui/Desktop/dodvaGAME/asset:pay/WECHAT.JPG" alt="WeChat Pay" style="width:100%;max-width:200px;margin:6px auto 0;display:block"/>
+      </div>
+      <div style="border:1px solid #2a2f48;border-radius:12px;padding:10px;text-align:center">
+        <div style="font-size:12px;color:#9aa0b3">支付宝收款码</div>
+        <img src="/Users/xinyuecui/Desktop/dodvaGAME/asset:pay/PAYPAL.jpg" alt="Alipay" style="width:100%;max-width:200px;margin:6px auto 0;display:block"/>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <input id="redeemCode" maxlength="16" placeholder="输入 12 位兑换码"
+             style="flex:1;border:1px solid #2a2f48;border-radius:10px;background:#0f0f17;color:#eaeaff;padding:10px 12px;font-size:15px;letter-spacing:1px"/>
+      <button id="redeemBtn" style="border:1px solid #3b3f59;border-radius:10px;background:#12121b;color:#eaeaff;padding:10px 14px;cursor:pointer">解锁</button>
+    </div>
+    <div id="redeemMsg" style="color:#9aa0b3;font-size:13px;margin-top:8px">付款疑问？加微信客服：<b>Xycgoodluck3</b></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+      <label style="color:#9aa0b3;font-size:12px"><input type="checkbox" id="agree" /> 我已完成付款并同意服务条款</label>
+      <button id="closePaywall" style="border:1px solid #3b3f59;border-radius:10px;background:transparent;color:#eaeaff;padding:6px 10px;cursor:pointer">先逛逛</button>
+    </div>
+  </div>
+</div>
+
+<!-- 锁蒙层样式（仅卡面预览可见） -->
+<style>
+  [data-locked]{ position:relative }
+  .card.locked::before{
+    content:'🔒 未解锁'; position:absolute; inset:auto 10px 10px auto;
+    color:#ffd2e1; font-size:12px; background:rgba(78,27,56,.6); border:1px solid #6a2a4b; 
+    padding:2px 8px; border-radius:999px;
+  }
+  .card.locked::after{
+    content:'Dodva Universe · Preview'; position:absolute; inset:10px; 
+    color:rgba(255,255,255,.06); font-weight:600; font-size:18px; 
+    transform:rotate(-18deg); pointer-events:none; border:2px dashed rgba(255,255,255,.06);
+  }
+</style>
+
+<script>
+/* 极简闸门：只展示卡面；解锁后跳转 arcade.html */
+(function(){
+  const KEY='du_unlock_all_v1';
+  const VALID_CODES=[
+    'DODVA7XQ2M9A','DODVAH8L3Z1Q','DODVA2K5Y7PN' // ← 先用假码测试，发给付费用户再替换
+  ];
+  const paid = ()=> localStorage.getItem(KEY)==='1';
+  const setPaid = ()=> localStorage.setItem(KEY,'1');
+
+  const banner  = document.getElementById('unlockBanner');
+  const paywall = document.getElementById('paywall');
+
+  function refresh(){
+    // 未付费：展示解锁条；卡面保持锁定；所有 data-locked 都不可点（本页只展示卡面，没有链接）
+    if(!paid()){
+      banner.style.display='block';
+      document.documentElement.classList.remove('du-paid');
+      return;
+    }
+    // 已付费：写入标记，并跳转 Arcade（真正能玩的合集页）
+    document.documentElement.classList.add('du-paid');
+    banner.style.display='none';
+    // 跳转
+    window.location.href = 'arcade.html';
+  }
+
+  document.getElementById('openPaywall')?.addEventListener('click', ()=> paywall.style.display='block');
+  document.getElementById('closePaywall')?.addEventListener('click', ()=> paywall.style.display='none');
+
+  document.getElementById('redeemBtn')?.addEventListener('click', ()=>{
+    const agree = document.getElementById('agree');
+    const code  = (document.getElementById('redeemCode').value||'').trim().toUpperCase();
+    const msg   = document.getElementById('redeemMsg');
+    if(!agree.checked){ msg.textContent='请先勾选“已付款并同意服务条款”。'; msg.style.color='#ff9ab3'; return; }
+    if(code.length<8){ msg.textContent='兑换码格式不正确。'; msg.style.color='#ff9ab3'; return; }
+
+    if(VALID_CODES.includes(code) || simpleCheck(code)){
+      setPaid(); msg.textContent='✅ 解锁成功，正在跳转…'; msg.style.color='#9fe6b8';
+      setTimeout(refresh, 480);
+    }else{
+      msg.textContent='兑换码无效，请核对或联系客服。'; msg.style.color='#ff9ab3';
+    }
+  });
+
+  function simpleCheck(code){
+    // 简单规则，避免全明文：长度≥12 且字符和 % 13 == 7
+    if(code.length<12) return false;
+    let s=0; for(const ch of code){ s+=ch.charCodeAt(0); }
+    return (s%13)===7;
+  }
+
+  refresh();
 })();
 </script>
 </body>

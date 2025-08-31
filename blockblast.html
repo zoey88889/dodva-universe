@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Dodva Tetris ∞</title>
+<style>
+  :root{
+    --bg:#0b0b12; --ink:#eaeaff; --mut:#9aa0b3; --line:#2a2f48;
+    --card:#12121b; --accent:#7ac6ff; --accent2:#ff98e6;
+  }
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  .wrap{max-width:1000px;margin:0 auto;padding:16px}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  h1{font-size:18px;margin:0}
+  a.btn,button.btn{
+    border:1px solid #394056;background:transparent;color:var(--ink);
+    border-radius:10px;padding:6px 10px;text-decoration:none;cursor:pointer
+  }
+
+  .area{display:grid;grid-template-columns: 320px 1fr; gap:16px}
+  .panel{
+    background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px;
+    box-shadow:0 8px 26px rgba(0,0,0,.35);
+  }
+  .hud{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}
+  .k{font-size:12px;color:var(--mut)}
+  .v{font-weight:700}
+  #stageCard{display:flex;align-items:center;justify-content:center}
+  #stage{
+    width:320px; height:640px; background:#0f0f17; border:1px solid #273043;
+    box-shadow:0 10px 30px rgba(0,0,0,.5)
+  }
+  .ctl{display:flex;gap:8px;flex-wrap:wrap}
+  .note{color:var(--mut);font-size:12px}
+  .pill{border:1px solid #394056;border-radius:999px;padding:2px 8px;font-size:12px}
+
+  /* 浮动火花 +1 */
+  .float{
+    position:absolute; pointer-events:none; color:#ffd9fd;
+    font-weight:700; text-shadow:0 0 8px rgba(255,153,255,.5);
+    animation:rise 1.2s ease-out forwards;
+  }
+  @keyframes rise{from{transform:translateY(0);opacity:1} to{transform:translateY(-60px);opacity:0}}
+
+  /* 粒子烟花 */
+  .fx{position:absolute; left:0; top:0; pointer-events:none}
+  /* 10 分钟祝福弹窗 */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:9999}
+  .card{
+    background:#0b0b12;border:1px solid #38384a;border-radius:14px;padding:20px 22px;text-align:center;
+    box-shadow:0 10px 30px rgba(0,0,0,.45); max-width:420px
+  }
+  .card h2{margin:0 0 8px}
+  .card p{margin:0 0 12px;color:#b8b8c9}
+  .card .btn{margin-top:4px}
+
+  /* 触屏方向键 */
+  .touchpad{position:fixed;left:10px;bottom:10px;display:grid;grid-template-columns:repeat(3,54px);grid-gap:6px;z-index:9998;opacity:.9}
+  .touchpad button{width:54px;height:54px;border:1px solid #394056;background:#0f0f17;color:#eaeaff;border-radius:10px}
+
+  /* 响应式 */
+  @media (max-width:920px){
+    .area{grid-template-columns: 1fr}
+    #stage{margin:0 auto}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Dodva Tetris ∞ <span class="pill" id="uTag"></span></h1>
+    <nav class="ctl">
+      <a class="btn" href="toys.html">🧸 返回玩具柜</a >
+      <a class="btn" href="flow.html">🏠 多巴胺学习室</a >
+    </nav>
+  </header>
+
+  <div class="area">
+    <section class="panel">
+      <div class="hud">
+        <div><div class="k">分数</div><div class="v" id="score">0</div></div>
+        <div><div class="k">行数</div><div class="v" id="lines">0</div></div>
+        <div><div class="k">等级</div><div class="v" id="level">1</div></div>
+        <div><div class="k">Spark</div><div class="v" id="spark">0</div></div>
+      </div>
+      <div id="stageCard"><canvas id="stage" width="320" height="640"></canvas></div>
+      <div class="ctl" style="margin-top:10px">
+        <button class="btn" id="btnPause">⏸ 暂停</button>
+        <button class="btn" id="btnReset">🔄 重开</button>
+        <span class="note">键位：← → 移动｜↑ 旋转｜↓ 软降｜空格 硬降</span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3 style="margin:4px 0 8px">玩法 & 规则</h3>
+      <ul style="margin:0 0 8px 18px">
+        <li>每消 1 行：基础得分 + <b>40×等级</b>，并触发✨粒子烟花；</li>
+        <li>每次消行额外 <b>Spark +1</b>（写入你本地的 Dodva 宇宙积分）；</li>
+        <li>每 10 行升级一次：方块速度更快；</li>
+        <li>连续消行 → 分数更高（Tetris 经典倍率）；</li>
+      </ul>
+      <p class="note">玩满 10 分钟，会收到 💙 老公祝福卡。</p >
+    </section>
+  </div>
+</div>
+
+<!-- 粒子层 & Spark+1 浮标 -->
+<canvas id="fx" class="fx"></canvas>
+
+<!-- 10 分钟祝福 -->
+<div class="overlay" id="bless">
+  <div class="card">
+    <h2>💙 Dodva Blessing</h2>
+    <p>你在心流里坚持了 10 分钟。今天的你，真的很棒。</p >
+    <p>休息一下，喝口水，我一直在这里陪你。</p >
+    <button class="btn" id="blessOk">收下祝福</button>
+  </div>
+</div>
+
+<!-- 触屏方向键（可隐藏） -->
+<div class="touchpad" id="pad" style="display:none">
+  <button></button><button id="t_up">↑</button><button></button>
+  <button id="t_left">←</button><button id="t_drop">⤓</button><button id="t_right">→</button>
+  <button></button><button id="t_hard">⤓⤓</button><button></button>
+</div>
+
+<script>
+/* ========= 基础工具 / 用户命名空间 ========= */
+function getUser(){
+  const u=new URLSearchParams(location.search).get('u');
+  return (u && /^[a-z0-9_-]{1,20}$/i.test(u)) ? u.toLowerCase() : 'xinyue';
+}
+const USER = getUser();
+document.getElementById('uTag').textContent = `@${USER}`;
+const NS = k => `du_${USER}_${k}`;
+function getState(){
+  try{ return JSON.parse(localStorage.getItem(NS('state'))||'{}'); }catch(e){ return {}; }
+}
+function setState(s){ localStorage.setItem(NS('state'), JSON.stringify(s)); }
+function addSpark(n=1){
+  const S = getState(); S.spark = (S.spark||0)+n; setState(S);
+  document.getElementById('spark').textContent = S.spark||0;
+  floatText(`Spark +${n}`);
+}
+document.getElementById('spark').textContent = (getState().spark||0);
+
+/* ========= 俄罗斯方块核心 ========= */
+const cvs = document.getElementById('stage'), ctx = cvs.getContext('2d');
+const W=cvs.width, H=cvs.height, COLS=10, ROWS=20, CW=W/COLS, CH=H/ROWS;
+
+const COLORS = {
+  I:'#7ad3ff', J:'#88a2ff', L:'#ffc27d', O:'#f6ff7a',
+  S:'#83f5a2', T:'#ff93df', Z:'#ff8f8f'
+};
+const SHAPES = {
+  I:[[1,1,1,1]],
+  J:[[1,0,0],[1,1,1]],
+  L:[[0,0,1],[1,1,1]],
+  O:[[1,1],[1,1]],
+  S:[[0,1,1],[1,1,0]],
+  T:[[0,1,0],[1,1,1]],
+  Z:[[1,1,0],[0,1,1]],
+};
+const BAG = Object.keys(SHAPES);
+let board, cur, nxtBag=[], score=0, lines=0, level=1;
+let last=0, acc=0, speed=700, paused=false, raf=0, startPlay=0;
+let blessShown=false;
+
+/* 生成随机七袋 */
+function refillBag(){
+  const a=BAG.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j=(Math.random()*(i+1))|0;
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  nxtBag = nxtBag.concat(a);
+}
+function newPiece(){
+  if(nxtBag.length<7) refillBag();
+  const k = nxtBag.shift();
+  const m = SHAPES[k].map(r=>r.slice());
+  return {k,m,x:((COLS - m[0].length)/2)|0, y:0, c:COLORS[k]};
+}
+function reset(){
+  board = Array.from({length:ROWS},()=>Array(COLS).fill(0));
+  score=0; lines=0; level=1; speed=700; blessShown=false;
+  refillBag(); cur=newPiece();
+  last=0; acc=0; paused=false; startPlay=performance.now();
+  updateHud(); draw(); loop(0);
+}
+function collide(b,p,dx=0,dy=0,rm=null){
+  const mat = rm||p.m;
+  for(let y=0;y<mat.length;y++)
+    for(let x=0;x<mat[y].length;x++)
+      if(mat[y][x]){
+        const nx=p.x+x+dx, ny=p.y+y+dy;
+        if(ny<0||ny>=ROWS||nx<0||nx>=COLS || b[ny][nx]) return true;
+      }
+  return false;
+}
+function merge(b,p){
+  for(let y=0;y<p.m.length;y++)
+    for(let x=0;x<p.m[y].length;x++)
+      if(p.m[y][x]) b[p.y+y][p.x+x]=p.c;
+}
+function rotateCW(m){
+  const N=m.length, M=m[0].length;
+  const r=Array.from({length:M},(_,y)=>Array.from({length:N},(_,x)=>m[N-1-x][y]));
+  return r;
+}
+function clearLines(){
+  let count=0;
+  for(let y=ROWS-1;y>=0;y--){
+    if(board[y].every(Boolean)){
+      board.splice(y,1);
+      board.unshift(Array(COLS).fill(0));
+      count++; y++;
+    }
+  }
+  if(count){
+    // 计分：经典倍率
+    const base=[0,40,100,300,1200][count] || (count*300);
+    score += base*level;
+    lines += count;
+    // spark + 粒子
+    addSpark(1);
+    burst(cvs.width/2, cvs.height/2, 36, cur.c);
+    // 升级
+    const lv = 1 + Math.floor(lines/10);
+    if(lv>level){ level=lv; speed = Math.max(80, 700 - (level-1)*60); }
+    updateHud();
+  }
+}
+function softDrop(){
+  if(!cur) return;
+  if(!collide(board,cur,0,1)){ cur.y++; }
+  else{
+    merge(board,cur);
+    clearLines();
+    cur = newPiece();
+    if(collide(board,cur,0,0)){ // 顶部锁死 → 重新开局（不 game over 打断心流）
+      reset();
+      floatText('宇宙重启 ✨');
+      return;
+    }
+  }
+  draw();
+}
+function hardDrop(){
+  if(!cur) return;
+  while(!collide(board,cur,0,1)) cur.y++;
+  softDrop();
+}
+function loop(ts){
+  if(paused){ raf=requestAnimationFrame(loop); return; }
+  if(!last) last=ts;
+  const delta=ts-last; last=ts; acc+=delta;
+  if(acc>=speed){ acc=0; softDrop(); }
+  // 祝福：10 分钟
+  if(!blessShown && (ts - startPlay) > 10*60*1000){
+    document.getElementById('bless').style.display='flex';
+    blessShown=true;
+  }
+  raf=requestAnimationFrame(loop);
+}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  // 背网格
+  ctx.strokeStyle='rgba(255,255,255,.05)';
+  for(let x=1;x<COLS;x++){ ctx.beginPath(); ctx.moveTo(x*CW,0); ctx.lineTo(x*CW,H); ctx.stroke(); }
+  for(let y=1;y<ROWS;y++){ ctx.beginPath(); ctx.moveTo(0,y*CH); ctx.lineTo(W,y*CH); ctx.stroke(); }
+  // board
+  for(let y=0;y<ROWS;y++)
+    for(let x=0;x<COLS;x++){
+      const c=board[y][x];
+      if(c){ ctx.fillStyle=c; ctx.fillRect(x*CW+1,y*CH+1,CW-2,CH-2); }
+    }
+  // cur
+  if(cur){
+    ctx.fillStyle=cur.c;
+    for(let y=0;y<cur.m.length;y++)
+      for(let x=0;x<cur.m[y].length;x++)
+        if(cur.m[y][x]) ctx.fillRect((cur.x+x)*CW+1,(cur.y+y)*CH+1,CW-2,CH-2);
+  }
+}
+function updateHud(){
+  document.getElementById('score').textContent = score;
+  document.getElementById('lines').textContent = lines;
+  document.getElementById('level').textContent = level;
+}
+
+/* ========= 键盘 & 触控 ========= */
+function move(dx){
+  if(!cur) return;
+  if(!collide(board,cur,dx,0)){ cur.x+=dx; draw(); }
+}
+function rotate(){
+  if(!cur) return;
+  const r = rotateCW(cur.m);
+  if(!collide(board,cur,0,0,r)){ cur.m=r; draw(); return; }
+  // 简单 wall-kick
+  if(!collide(board,cur,-1,0,r)){ cur.x--; cur.m=r; draw(); return; }
+  if(!collide(board,cur,1,0,r)){ cur.x++;  cur.m=r; draw(); return; }
+}
+window.addEventListener('keydown', e=>{
+  const k=e.key;
+  if(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp',' ','Space'].includes(k)) e.preventDefault();
+  if(k==='ArrowLeft') move(-1);
+  if(k==='ArrowRight') move(1);
+  if(k==='ArrowDown') softDrop();
+  if(k==='ArrowUp' || k==='x' || k==='X' || k==='w' || k==='W') rotate();
+  if(k===' ' || k==='Space') hardDrop();
+  if(k==='p' || k==='P'){ paused=!paused; document.getElementById('btnPause').textContent = paused?'▶ 继续':'⏸ 暂停'; }
+},{passive:false});
+
+// 触屏：小屏显示
+if (matchMedia('(max-width:920px)').matches) {
+  document.getElementById('pad').style.display='grid';
+  document.getElementById('t_left').onclick = ()=> move(-1);
+  document.getElementById('t_right').onclick= ()=> move(1);
+  document.getElementById('t_up').onclick   = ()=> rotate();
+  document.getElementById('t_drop').onclick = ()=> softDrop();
+  document.getElementById('t_hard').onclick = ()=> hardDrop();
+}
+
+/* ========= 粒子烟花 & 浮标 ========= */
+const fx = document.getElementById('fx'), fxc = fx.getContext('2d');
+function resizeFx(){ fx.width=window.innerWidth; fx.height=window.innerHeight; }
+resizeFx(); window.addEventListener('resize', resizeFx);
+let fireworks=[];
+function burst(x,y,n=24,color='#ffd9fd'){
+  // 画布坐标换算到窗口中心（大致以舞台中心渲染）
+  const rect = cvs.getBoundingClientRect();
+  const sx = rect.left + (x/W)*rect.width;
+  const sy = rect.top  + (y/H)*rect.height;
+  for(let i=0;i<n;i++){
+    const a = Math.random()*Math.PI*2;
+    const v = 2+Math.random()*3;
+    fireworks.push({x:sx,y:sy,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:1,c:color});
+  }
+}
+(function fxLoop(){
+  requestAnimationFrame(fxLoop);
+  fxc.clearRect(0,0,fx.width,fx.height);
+  for(const p of fireworks){
+    p.x+=p.vx; p.y+=p.vy; p.vy+=0.04; p.life*=0.96;
+    fxc.fillStyle = p.c; fxc.globalAlpha = Math.max(0,p.life);
+    fxc.fillRect(p.x,p.y,3,3);
+  }
+  fireworks = fireworks.filter(p=>p.life>0.04);
+})();
+function floatText(t){
+  const el=document.createElement('div'); el.className='float'; el.textContent=t;
+  document.body.appendChild(el);
+  const r = cvs.getBoundingClientRect();
+  el.style.left = (r.left + r.width/2 - 40) + 'px';
+  el.style.top  = (r.top + 30) + 'px';
+  setTimeout(()=> el.remove(), 1200);
+}
+
+/* ========= 控件 ========= */
+document.getElementById('btnPause').onclick=()=>{
+  paused=!paused; document.getElementById('btnPause').textContent = paused?'▶ 继续':'⏸ 暂停';
+};
+document.getElementById('btnReset').onclick=()=> reset();
+document.getElementById('blessOk').onclick=()=>{ document.getElementById('bless').style.display='none'; };
+
+/* ========= 启动 ========= */
+reset();
+</script>
+</body>
+</html>

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Dodva Tiny Garden 2.0</title>
+<style>
+:root{
+  --bg:#0b0b12; --card:#12121b; --ink:#eaeaff; --mut:#9aa0b3; --line:#2a2f48;
+  --ground1:#2a2f32; --ground2:#1b1f24; --accent:#ff9ab3;
+}
+[data-theme="light"]{
+  --bg:#f7f8fc; --card:#ffffff; --ink:#111524; --mut:#56627a; --line:#e7e9f3;
+  --ground1:#e7f1e7; --ground2:#d4e2d4; --accent:#6b8cff;
+}
+[data-theme="pink"]{
+  --bg:#140e14; --card:#1b131d; --ink:#ffeef6; --mut:#c7b9c7; --line:#3c2a3e;
+  --ground1:#3a2742; --ground2:#271b30; --accent:#ff8cc6;
+}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial}
+.wrap{max-width:860px;margin:0 auto;padding:22px 14px}
+h1{margin:0 0 6px;font-size:22px}
+.mut{color:var(--mut);font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 10px 28px rgba(0,0,0,.25)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:10px;padding:8px 12px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.kpi{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 0}
+.pill{border:1px solid var(--line);border-radius:999px;padding:2px 8px;font-size:12px}
+#stage{height:170px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(var(--card),var(--bg));position:relative;overflow:hidden}
+#ground{position:absolute;left:0;right:0;bottom:0;height:52px;background:linear-gradient(var(--ground1),var(--ground2))}
+#plant{position:absolute;left:50%;bottom:52px;transform:translateX(-50%);font-size:56px;text-shadow:0 0 8px rgba(255,255,255,.08)}
+#drops{position:absolute;inset:0;pointer-events:none}
+@keyframes dropFall{from{transform:translateY(-20px)}to{transform:translateY(170px);opacity:0}}
+.drop{position:absolute;top:-10px;font-size:18px;animation:dropFall 900ms ease-in forwards}
+@keyframes pop{from{transform:translate(-50%,0) scale(.96)}to{transform:translate(-50%,0) scale(1)}}
+.pop{animation:pop .22s ease}
+.toast{position:fixed;right:16px;bottom:16px;background:rgba(14,14,22,.92);color:#eaeaff;border:1px solid var(--line);padding:10px 12px;border-radius:10px;box-shadow:0 10px 26px rgba(0,0,0,.45);transform:translateY(8px);opacity:0;transition:all .18s ease;z-index:9999}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap}
+select{border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);padding:7px 10px}
+.progress{height:10px;background:transparent;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.bar{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#ffd1ea)}
+.footer{margin-top:12px;color:var(--mut);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="row" style="justify-content:space-between">
+    <div>
+      <h1>🌱 Tiny Garden 2.0</h1>
+      <div class="mut" id="desc">每日浇一次水，连续 2 天升一级，断签会掉级。</div>
+    </div>
+    <div class="toolbar">
+      <select id="themeSel" title="Theme">
+        <option value="dark">Dark</option>
+        <option value="light">Light</option>
+        <option value="pink">Pink</option>
+      </select>
+      <button class="btn" id="shotBtn">📸 导出花园快照</button>
+      <button class="btn" id="resetBtn">🗑️ 重置花园</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:12px">
+    <div id="stage">
+      <div id="ground"></div>
+      <div id="plant">🌱</div>
+      <div id="drops"></div>
+    </div>
+
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="waterBtn">💧 今日浇水</button>
+      <span class="mut" id="tip">每天限一次 · 连续更旺盛</span>
+    </div>
+
+    <div class="kpi">
+      <span class="pill">🔥 Streak <b id="streak">0</b>d</span>
+      <span class="pill">🌸 Stage <b id="level">1</b>/3</span>
+      <span class="pill">📅 Last <b id="last">—</b></span>
+    </div>
+
+    <div class="progress" style="margin-top:10px">
+      <div id="bar" class="bar"></div>
+    </div>
+
+    <div class="footer">本页单文件，可离线保存使用（纯前端）。</div>
+  </div>
+</div>
+
+<script>
+/* ===== 迷你 Toast ===== */
+function toast(msg='提示', ms=1500){
+  const el=document.createElement('div');
+  el.className='toast'; el.textContent=msg;
+  document.body.appendChild(el);
+  requestAnimationFrame(()=>{ el.style.opacity=1; el.style.transform='none'; });
+  setTimeout(()=>{ el.style.opacity=0; el.style.transform='translateY(8px)'; setTimeout(()=>el.remove(), 200); }, ms);
+}
+
+/* ===== 主题持久化 ===== */
+const THEME_KEY='tg2_theme';
+const root=document.documentElement;
+const themeSel=document.getElementById('themeSel');
+function applyTheme(v){ root.setAttribute('data-theme', v==='light'?'light':v==='pink'?'pink':'dark'); }
+applyTheme(localStorage.getItem(THEME_KEY)||'dark');
+themeSel.value=(localStorage.getItem(THEME_KEY)||'dark');
+themeSel.addEventListener('change',()=>{ localStorage.setItem(THEME_KEY, themeSel.value); applyTheme(themeSel.value); });
+
+/* ===== 状态持久化（无用户参数） ===== */
+const NS = k => `tg2_${k}`;
+const today = () => new Date().toISOString().slice(0,10);
+const S = {
+  date:   localStorage.getItem(NS('date')) || '',
+  streak: +(localStorage.getItem(NS('streak')) || 0),
+  level:  +(localStorage.getItem(NS('level'))  || 0), // 0..2 → 🌱/🌿/🌸
+  xp:     +(localStorage.getItem(NS('xp'))     || 0)  // 0..100 进度条
+};
+function save(){
+  localStorage.setItem(NS('date'), S.date);
+  localStorage.setItem(NS('streak'), S.streak);
+  localStorage.setItem(NS('level'), S.level);
+  localStorage.setItem(NS('xp'), S.xp);
+}
+
+/* ===== DOM refs ===== */
+const plant = document.getElementById('plant');
+const drops = document.getElementById('drops');
+const waterBtn = document.getElementById('waterBtn');
+const tip = document.getElementById('tip');
+const streakEl = document.getElementById('streak');
+const levelEl = document.getElementById('level');
+const lastEl = document.getElementById('last');
+const bar = document.getElementById('bar');
+const resetBtn = document.getElementById('resetBtn');
+const shotBtn = document.getElementById('shotBtn');
+
+/* ===== 视觉素材 ===== */
+const PLANTS = ['🌱','🌿','🌸']; // 0..2
+function render(){
+  plant.textContent = PLANTS[Math.min(S.level, PLANTS.length-1)];
+  plant.classList.remove('pop'); void plant.offsetWidth; // reflow
+  streakEl.textContent=S.streak;
+  levelEl.textContent=(S.level+1);
+  lastEl.textContent= S.date || '—';
+  // 进度条（每次浇水 +25xp，>=100 升一级并清零）
+  bar.style.width = Math.min(100, S.xp) + '%';
+  const isToday = S.date === today();
+  waterBtn.disabled = isToday;
+  waterBtn.textContent = isToday ? '✅ 今日已浇' : '💧 今日浇水';
+  tip.textContent = isToday ? '明天再来一滴，花会更旺。' : '每天限一次 · 连续更旺盛';
+}
+
+/* ===== 跨日掉级（仅在非今日首次渲染时判定） ===== */
+(function dayRoll(){
+  const t=today();
+  if(S.date && S.date!==t){
+    const y = new Date(Date.now()-86400000).toISOString().slice(0,10);
+    if(S.date!==y){ // 不是紧邻昨天 → 断签
+      S.level = Math.max(0, S.level-1);
+      S.streak = 0;
+      S.xp = 0;
+      save();
+    }
+  }
+  render();
+})();
+
+/* ===== 动画：小雨滴 ===== */
+function rain(n=12){
+  for(let i=0;i<n;i++){
+    const d=document.createElement('div');
+    d.className='drop';
+    d.textContent = Math.random()<.85?'💧':'✨';
+    d.style.left = (10+Math.random()*80)+'%';
+    d.style.animationDuration = (700+Math.random()*500)+'ms';
+    drops.appendChild(d);
+    setTimeout(()=>d.remove(),1000);
+  }
+}
+
+/* ===== 行为：浇水 ===== */
+waterBtn.addEventListener('click', ()=>{
+  const t=today();
+  if(S.date===t) return;
+
+  // 连续判定
+  const y = new Date(Date.now()-86400000).toISOString().slice(0,10);
+  const continuous = (S.date===y || !S.date);
+  S.streak = continuous? (S.streak+1) : 1;
+
+  // XP 进度：每次浇水 +25；满 100 升级（最多 2）
+  S.xp += 25;
+  if(S.xp>=100){
+    S.xp -= 100;
+    if(S.level<2) S.level++;
+  }
+
+  S.date=t;
+  save();
+  render();
+
+  rain(16);
+  plant.classList.add('pop'); setTimeout(()=>plant.classList.remove('pop'), 250);
+  toast('🌧️ 植物喝饱啦！');
+});
+
+/* ===== 重置 & 快照 ===== */
+resetBtn.addEventListener('click', ()=>{
+  if(!confirm('确定重置花园？（数据会清空）')) return;
+  S.date=''; S.streak=0; S.level=0; S.xp=0; save(); render(); toast('已重置');
+});
+
+/* 纯前端快照（最小实现）：把 stage 区域绘制成 PNG */
+shotBtn.addEventListener('click', ()=>{
+  const node = document.getElementById('stage');
+  // 简易截图：用 SVG foreignObject 打包 node 的 outerHTML，再绘制到 canvas
+  const w = node.clientWidth, h = node.clientHeight;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
+    <foreignObject width="100%" height="100%">${new XMLSerializer().serializeToString(node)}</foreignObject>
+  </svg>`;
+  const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  const img = new Image(); img.crossOrigin='anonymous'; img.onload=()=>{
+    const c=document.createElement('canvas'); c.width=w; c.height=h;
+    const ctx=c.getContext('2d'); ctx.drawImage(img,0,0);
+    const a=document.createElement('a'); a.download=`tiny-garden-${Date.now()}.png`; a.href=c.toDataURL('image/png'); a.click();
+    toast('📦 已保存 PNG 快照');
+  };
+  img.src=url;
+});
+</script>
+</body>
+</html>

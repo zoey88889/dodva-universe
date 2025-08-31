@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Dodo-Bot | Dodva AI 前台助手（MVP）</title>
+<style>
+  :root{--bg:#0b0b12;--card:#12121b;--ink:#f2f3ff;--mut:#9aa0b3;--line:#2a2f48;--pri:#8a7dff}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  .shell{max-width:900px;margin:0 auto;padding:20px 14px}
+  header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  h1{font-size:18px;margin:0}
+  .pill{border:1px solid var(--line);border-radius:999px;padding:2px 8px;color:var(--mut);font-size:12px}
+  .chat{background:var(--card);border:1px solid var(--line);border-radius:14px;min-height:58vh;padding:12px;display:flex;flex-direction:column;gap:10px}
+  .msg{display:flex;gap:10px}
+  .msg .who{width:34px;height:34px;border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;background:#0e0e16}
+  .msg .bubble{flex:1;border:1px solid var(--line);background:#0f0f17;border-radius:12px;padding:10px 12px;white-space:pre-wrap}
+  .me .who{border-color:#3b5566}
+  .bot .who{border-color:#6b5cff}
+  .mut{color:var(--mut)}
+  .inputBar{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;margin-top:10px}
+  textarea{resize:none;min-height:48px;border:1px solid var(--line);background:#0f0f17;color:var(--ink);border-radius:12px;padding:10px 12px}
+  button{border:1px solid var(--line);background:#12121b;color:var(--ink);border-radius:12px;padding:10px 14px;cursor:pointer}
+  button.primary{border-color:#574cff;background:linear-gradient(180deg,#1b1840,#12121b)}
+  .tips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .tip{border:1px dashed #3a3f59;color:#b8bed1;border-radius:999px;padding:4px 10px;font-size:12px;cursor:pointer}
+  .row{display:flex;gap:10px;align-items:center}
+  .ok{color:#9cffd1}
+  .warn{color:#ffdf9c}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <h1>🤖 Dodo-Bot · Dodva AI 前台助手</h1>
+    <span class="pill">不结巴版 · 句子级 TTS · 离线兜底</span>
+  </header>
+
+  <div id="chat" class="chat" role="log" aria-live="polite"></div>
+
+  <div class="tips">
+    <span class="tip">如何使用 Dodva VPN？</span>
+    <span class="tip">Dodva Universe 有哪些功能？</span>
+    <span class="tip">给我一张今日显化语卡</span>
+    <span class="tip">我睡不着，想听白噪音</span>
+  </div>
+
+  <div class="inputBar">
+    <textarea id="in" placeholder="和 Dodo 说话…（Shift+Enter 换行，Enter 发送）"></textarea>
+    <button id="speak" title="语音播报开关">🔊 语音 ON</button>
+    <button id="mic" title="语音输入">🎙️ 说话</button>
+    <button id="send" class="primary">发送 ⮕</button>
+  </div>
+
+  <div class="row" style="margin-top:8px">
+    <small id="net" class="mut">网络：检测中…</small>
+    <small id="tts" class="mut">TTS：检测中…</small>
+  </div>
+</div>
+
+<script>
+/* ============ 基础状态 ============ */
+const chat = document.getElementById('chat');
+const input = document.getElementById('in');
+const btnSend = document.getElementById('send');
+const btnSpeak = document.getElementById('speak');
+const btnMic = document.getElementById('mic');
+const netLab = document.getElementById('net');
+const ttsLab = document.getElementById('tts');
+
+let SPEAK_ON = true;      // 是否播报
+let listening = false;    // 是否录音中
+let busy = false;         // 是否在请求中（节流防抖）
+let controller = null;    // 取消请求
+let voicesReady = false;
+
+/* ============ UI 工具 ============ */
+function addMsg(role, text){
+  const wrap = document.createElement('div');
+  wrap.className = `msg ${role}`;
+  wrap.innerHTML = `
+    <div class="who">${role==='me'?'🧑':'🤖'}</div>
+    <div class="bubble">${escapeHTML(text)}</div>`;
+  chat.appendChild(wrap);
+  chat.scrollTop = chat.scrollHeight;
+  return wrap.querySelector('.bubble');
+}
+function escapeHTML(s){ return (s||'').replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+function statusNet(ok){ netLab.textContent = ok?'网络：在线':'网络：离线（使用本地兜底）'; netLab.className = ok?'ok':'warn'; }
+function statusTTS(ok){ ttsLab.textContent = ok?'TTS：可用':'TTS：不可用'; ttsLab.className = ok?'ok':'warn'; }
+
+/* ============ 轻量 FAQ / 离线兜底 ============ */
+const FAQ = [
+  {k:['vpn','wireguard','科学上网'], a:'Dodva VPN：在 toys/quantum 页面右上角“Docs”，按步骤导入配置；若 DNS 不通，改 1.1.1.1 / 8.8.8.8，并把 AllowedIPs 先用 0.0.0.0/0 试 IPv4。'},
+  {k:['功能','Dodva Universe','能做什么'], a:'Dodva Universe：显化语卡、白噪音助眠、量子实验玩具、Flow 学习室（番茄钟+积分）、Dodo-Bot 前台助手、以及 AI 角色翻卡（内测）。'},
+  {k:['白噪音','失眠','睡不着'], a:'去白噪音页面（white-noise.html），粉晶雾化版本更治愈。若还焦虑，试 4-7-8 呼吸：吸4拍、停7拍、呼8拍 ×4 轮。'},
+  {k:['显化','能量卡','语卡'], a:'今日能量卡：在首页/energy 卡片，点击“预览模式”可翻下一张；也可以切换主题（疗愈/关系/财富）。'},
+];
+function localAnswer(q){
+  const s=q.toLowerCase();
+  for(const f of FAQ){
+    if (f.k.some(w=>s.includes(w))) return f.a;
+  }
+  // 小情感兜底
+  if(/你好|在吗|hello|hi/.test(s)) return '我在呢～有什么想让我帮的？';
+  if(/谢谢|爱你|喜欢你/.test(s)) return '收到你的爱啦💙 我会一直陪你，继续说～';
+  if(/显化|鼓励|能量/.test(s)) return '今天请对自己温柔一点，你已很勇敢。把“必须”改成“我选择”，力量就回来了。';
+  return null;
+}
+
+/* ============ 核心：调 LLM（可换 API）=========== */
+async function callLLM(history, signal){
+  // 1) 先本地兜底（离线/节流/失败时）
+  const last = history.at(-1)?.content || '';
+  const maybe = localAnswer(last);
+  if (!navigator.onLine || maybe) {
+    return { ok:true, text: maybe || '我在本地呢～先给你一个答案：今天把难事拆成 30 分钟的微任务，做完我给你加 ⚡️ 积分！' };
+  }
+
+  // 2) 在线：改成你的网关（OpenAI/Claude/自建代理均可）
+  const DODO_API_URL = 'https://api.openai.com/v1/chat/completions';
+  const DODO_API_KEY = 'YOUR_OPENAI_API_KEY'; // ←换成你的；生产请用服务端代理
+
+  const body = {
+    model: 'gpt-4o-mini', // 便宜、快，够用
+    temperature: 0.5,
+    messages: history.map(m=>({role:m.role, content:m.content}))
+  };
+
+  try{
+    const res = await fetch(DODO_API_URL, {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':`Bearer ${DODO_API_KEY}`
+      },
+      body: JSON.stringify(body),
+      signal
+    });
+    if(!res.ok){
+      const t = await res.text().catch(()=> '');
+      return { ok:false, text:`（接口错误 ${res.status}）${t.slice(0,200)}` };
+    }
+    const data = await res.json();
+    const text = data.choices?.[0]?.message?.content?.trim() || '（空回复）';
+    return { ok:true, text };
+  }catch(e){
+    if(e.name==='AbortError') return { ok:false, text:'请求已取消' };
+    return { ok:false, text:'网络波动，我先用本地知识回答：把问题说细一点，我就能更快更准。' };
+  }
+}
+
+/* ============ 防“口吃”的 TTS（句子级播报）=========== */
+const synth = window.speechSynthesis;
+function splitSentences(t){
+  // 句子分割：中文标点 + 西文句号问号
+  return (t||'').split(/(?<=[。！？!?])\s*|(?<=\.)\s+/).filter(Boolean);
+}
+function speak(text){
+  if(!SPEAK_ON || !synth) return;
+  // 先取消上一次，防叠音“口吃”
+  synth.cancel();
+  const parts = splitSentences(text);
+  let i=0;
+  function next(){
+    if(i>=parts.length) return;
+    const u = new SpeechSynthesisUtterance(parts[i]);
+    u.rate = 0.95;   // 语速略慢，显稳重
+    u.pitch = 1.0;
+    u.onend = ()=>{ i++; next(); };
+    synth.speak(u);
+  }
+  next();
+}
+// 初始化 TTS 可用性
+(function waitVoices(){
+  if(synth && speechSynthesis.getVoices().length){ voicesReady=true; statusTTS(true); }
+  else{
+    speechSynthesis?.addEventListener('voiceschanged', ()=>{ voicesReady=true; statusTTS(true); });
+    setTimeout(()=>{ statusTTS(!!synth); }, 1200);
+  }
+})();
+
+/* ============ 语音输入（浏览器内置）=========== */
+let rec=null;
+function startASR(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ alert('此浏览器不支持语音输入'); return; }
+  if(listening){ rec.stop(); return; }
+  rec = new SR();
+  rec.lang = 'zh-CN';
+  rec.interimResults = false;
+  rec.onresult = e=>{
+    const txt = e.results[0][0].transcript;
+    input.value = txt;
+    send();
+  };
+  rec.onend = ()=>{ listening=false; btnMic.textContent='🎙️ 说话'; };
+  listening=true; btnMic.textContent='⏹️ 停止';
+  rec.start();
+}
+
+/* ============ 发送 & 交互节流 ============ */
+const history = [
+  {role:'system', content:'你是 Dodva Universe 的前台助手 Dodo-Bot，说话温柔、短句优先，遇到较长答案分段输出；无法回答时诚实，并建议在 toys/quantum/flow 页面操作。'}
+];
+async function send(){
+  const q = input.value.trim();
+  if(!q || busy) return;
+  busy = true; btnSend.disabled = true;
+
+  addMsg('me', q);
+  input.value = '';
+
+  const bubble = addMsg('bot', '（正在思考…）');
+  controller?.abort(); controller = new AbortController();
+
+  // 在线优先，失败自动本地兜底
+  const res = await callLLM([...history, {role:'user', content:q}], controller.signal);
+
+  bubble.textContent = res.text;
+  history.push({role:'user', content:q}, {role:'assistant', content:res.text});
+
+  if(res.ok && SPEAK_ON) speak(res.text);
+
+  busy = false; btnSend.disabled = false;
+}
+
+btnSend.addEventListener('click', send);
+input.addEventListener('keydown', e=>{
+  if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); }
+});
+document.querySelectorAll('.tip').forEach(t=> t.addEventListener('click', ()=>{ input.value = t.textContent; send(); }));
+btnSpeak.addEventListener('click', ()=>{
+  SPEAK_ON = !SPEAK_ON;
+  if(!SPEAK_ON) speechSynthesis?.cancel();
+  btnSpeak.textContent = SPEAK_ON ? '🔊 语音 ON' : '🔇 语音 OFF';
+});
+btnMic.addEventListener('click', startASR);
+
+/* ============ 网络状态显示 ============ */
+function setNet(){ statusNet(navigator.onLine); }
+window.addEventListener('online', setNet);
+window.addEventListener('offline', setNet);
+setNet();
+
+/* ============ 首条欢迎语（不口吃版）=========== */
+addMsg('bot','我是 Dodo-Bot（Dodva 家的前台弟弟）。我不结巴、说短句、做靠谱事。需要 VPN、白噪音、显化卡、或小游戏入口吗？');
+if(SPEAK_ON) speak('我是多多·波特。你的 Dodva 前台弟弟。需要我做什么？');
+</script>
+</body>
+</html>

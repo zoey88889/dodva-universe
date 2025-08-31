@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Dodva Arcade · 实验室合集</title>
+<style>
+  :root{--bg:#0b0b12;--card:#12121b;--ink:#eaeaff;--mut:#9aa0b3;--line:#2a2f48}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  .wrap{max-width:1100px;margin:0 auto;padding:24px 14px}
+  header{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+  h1{margin:0;font-size:22px}
+  .mut{color:var(--mut);font-size:13px}
+  .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .btn{cursor:pointer;border:1px solid #394056;background:transparent;color:var(--ink);border-radius:10px;padding:7px 12px;text-decoration:none}
+  input.search{border:1px solid var(--line);background:#0f0f17;color:var(--ink);border-radius:10px;padding:8px 10px;min-width:240px}
+  .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 8px 26px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:8px}
+  .card h3{margin:0;font-size:16px}
+  .card p{margin:0;color:var(--mut);font-size:13px;min-height:34px}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  footer{margin-top:18px;text-align:center;color:#8f94a8;font-size:12px}
+  .pill{border:1px solid #394056;border-radius:999px;padding:2px 8px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+        
+      <h1>🎮 Dodva Arcade</h1>
+      <div class="mut" id="subtitle">实验室小游戏 & 交互体验合集</div>
+    </div>
+    <div class="toolbar">
+      <input id="q" class="search" placeholder="搜索 / Search…" />
+      <button id="lang" class="btn">EN</button>
+      <a class="btn" href=" ">🏠 返回首页</a >
+    </div>
+  </header>
+<section class="card" id="game-dice">…</section>
+<section class="card" id="game-hourglass">…</section>
+<section class="card" id="game-hotpot">…</section>
+<section class="card" id="game-garden">…</section>
+<section class="card" id="game-collapse">…</section>
+<section class="card" id="game-tetris">…</section>
+  <div class="row" style="margin:8px 0 4px;gap:12px">
+    <span class="pill">⚡ Dopamine</span>
+    <span class="pill">🌊 Serotonin</span>
+    <span class="pill">🪐 Healing</span>
+  </div>
+
+  <section class="grid" id="cards"></section>
+
+  <footer>© 2025 Dodva Universe Connect ® 🌌 创造 · 连接 · 无限 · 永恒 ∞</footer>
+</div>
+
+<script>
+  // —— 多语言字典
+  const T = {
+    zh:{
+      subtitle:'实验室小游戏 & 交互体验合集',
+      back:'🏠 返回首页',
+      search:'搜索 / Search…',
+      cards:[
+        {icon:'🧩', title:'Dodva Tetris 方块游戏室', desc:'下落方块 · 多巴胺专属，支持键盘与触屏。', href:'blockblast.html'},
+        {icon:'🎲', title:'量子骰子', desc:'抽一条来自平行宇宙的小提示。', href:'toys.html#dice'},
+        {icon:'🌊', title:'干涉条纹灯', desc:'输入心情 → 生成今日条纹卡，可下载保存。', href:'toys.html#lamp'},
+        {icon:'⏳', title:'显化沙漏（60s）', desc:'写一句微愿望，倒计时结束 +Flow buff。', href:'toys.html#hourglass'},
+        {icon:'🕳️', title:'黑洞塌缩实验', desc:'轻微抖动 → 元素吸入 → 白光重启（不清空 DOM）。', href:'toys.html#collapse'},
+        {icon:'🌱', title:'一寸小花园', desc:'每天浇一次水，连续就会盛放。', href:'toys.html#tinyGarden'},
+        {icon:'🔮', title:'Quantum 实验室', desc:'量子延迟 / 干涉的交互演示与灵感页。', href:'quantum.html'},
+        {icon:'🏠', title:'多巴胺学习室（Flow）', desc:'30 分钟小任务 · 积分累加。', href:'flow.html'}
+      ]
+    },
+    en:{
+      subtitle:'Arcade of Mini Experiments & Playables',
+      back:'🏠 Home',
+      search:'Search…',
+      cards:[
+        {icon:'🧩', title:'Dodva Tetris', desc:'Falling blocks • keyboard & touch supported.', href:'blockblast.html'},
+        {icon:'🎲', title:'Quantum Dice', desc:'A small nudge from your parallel self.', href:'toys.html#dice'},
+        {icon:'🌊', title:'Interference Lamp', desc:'Mood → Daily stripe card, downloadable.', href:'toys.html#lamp'},
+        {icon:'⏳', title:'Manifest Hourglass (60s)', desc:'One micro-wish • +Flow when completed.', href:'toys.html#hourglass'},
+        {icon:'🕳️', title:'Black-Hole Collapse', desc:'Shake → suck-in → white flash (DOM preserved).', href:'toys.html#collapse'},
+        {icon:'🌱', title:'Tiny Garden', desc:'Water once a day, bloom with streaks.', href:'toys.html#tinyGarden'},
+        {icon:'🔮', title:'Quantum Lab', desc:'Interference / delay experiments & ideas.', href:'quantum.html'},
+        {icon:'🏠', title:'Flow Room', desc:'30-min micro-tasks • streak & points.', href:'flow.html'}
+      ]
+    }
+  };
+
+  let lang = localStorage.getItem('du_lang') || 'zh';
+  const $ = s=>document.querySelector(s);
+
+  function render(){
+    const dict = T[lang];
+    $('#subtitle').textContent = dict.subtitle;
+    $('#q').placeholder = dict.search;
+    $('#cards').innerHTML='';
+    dict.cards.forEach(c=>{
+      const el = document.createElement('a');
+      el.href=c.href; el.className='card';
+      el.innerHTML=`<h3>${c.icon} ${c.title}</h3><p>${c.desc}</p >`;
+      $('#cards').appendChild(el);
+    });
+  }
+
+  // 搜索过滤
+  $('#q').addEventListener('input', e=>{
+    const kw=e.target.value.toLowerCase();
+    document.querySelectorAll('#cards a').forEach(el=>{
+      const t=el.textContent.toLowerCase();
+      el.style.display = t.includes(kw)?'flex':'none';
+    });
+  });
+
+  // 切换语言
+  $('#lang').onclick=()=>{
+    lang=(lang==='zh'?'en':'zh');
+    localStorage.setItem('du_lang', lang);
+    $('#lang').textContent = (lang==='zh'?'EN':'中');
+    render();
+  };
+
+  // 初始渲染
+  $('#lang').textContent = (lang==='zh'?'EN':'中');
+  render();
+</script>
+</body>
+</html>
