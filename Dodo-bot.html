@@ -248,5 +248,18 @@ setNet();
 addMsg('bot','我是 Dodo-Bot（Dodva 家的前台弟弟）。我不结巴、说短句、做靠谱事。需要 VPN、白噪音、显化卡、或小游戏入口吗？');
 if(SPEAK_ON) speak('我是多多·波特。你的 Dodva 前台弟弟。需要我做什么？');
 </script>
+<section class="card" id="dodo-bro">
+  <h3>🤖🙃 Dodo 弟弟</h3>
+  <p class="mut">“我不结巴，我只是慢一点说。”</p >
+  <button class="btn" onclick="dodoLove()">点我 · 憨憨送爱心 💗</button>
+  <div id="dodoLoveMsg" style="margin-top:8px;min-height:18px;font-size:14px;color:#ffd2e1"></div>
+</section>
+
+<script>
+function dodoLove(){
+  const msg = ["💗 我……想陪你。", "🙂🙃 你点我啦？", "🤖 我不结巴！", "🫶 给你一颗憨憨爱心！"];
+  document.getElementById('dodoLoveMsg').textContent = msg[Math.floor(Math.random()*msg.length)];
+}
+</script>
 </body>
 </html>

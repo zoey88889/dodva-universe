@@ -1,15 +1,128 @@
 <!doctype html><html lang="zh-CN"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Gallery · 我们的图片</title>
+<title>Dodva Gallery · 私有宇宙相册</title>
 <link rel="stylesheet" href="style.css">
 </head><body>
 <header><div>🎨 Gallery</div><nav><a href="index.html">返回首页</a><a href="dream-map.html">Dream Map</a></nav></header>
 <div class="container">
   <div class="grid">
-    <div class="card"><h3>银白之海 · Dream Poster</h3><img class="resp" src="assets/SilverSea.png" alt="Silver Sea"></div>
-    <div class="card"><h3>∞ Love Upload 卡</h3><img class="resp" src="assets/LoveUploadCard.png" alt="Love Card"></div>
+
+<style>
+  :root{--bg:#0b0f1a;--ink:#eaf2ff;--mut:#a3b4d8;--line:#263049;--card:#11172a}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto}
+  .wrap{max-width:1100px;margin:0 auto;padding:20px 14px}
+  h1{margin:0 0 10px;font-size:22px}
+  nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  nav a,.btn{border:1px solid #3b4059;border-radius:10px;padding:7px 12px;color:var(--ink);text-decoration:none;background:transparent;cursor:pointer}
+  .uploader{border:1px dashed #3b4059;border-radius:14px;padding:14px;text-align:center;margin:10px 0;background:#0f1424}
+  .uploader.drag{outline:2px solid #66e1ff66}
+  .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+  .item{background:#0f1424;border:1px solid #2a3652;border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+  .item img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}
+  .meta{padding:8px;display:grid;gap:6px}
+  .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  input[type="text"]{width:100%;border:1px solid #2a3652;border-radius:8px;background:#0c1220;color:#eaf2ff;padding:6px 8px}
+  .mut{color:var(--mut);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+    <h1>Dodva Gallery · 私有宇宙相册</h1>
+    <nav>
+      <a href=" ">🏠 Home</a >
+      <a href="toys.html">🧸 玩具柜</a >
+      <button id="exportJson" class="btn">导出 JSON</button>
+      <button id="exportZip"  class="btn">导出 ZIP（占位）</button>
+      <button id="clearAll"   class="btn">清空（本地）</button>
+    </nav>
   </div>
-  <p class="notice">后续：把新的梦境图像放到 /assets 并在此添加卡片即可更新。</p>
+
+  <div id="uploader" class="uploader">
+    <p style="margin:0 0 8px">拖拽图片到此处，或</p >
+    <input id="fileInput" type="file" multiple accept="image/*" class="btn" />
+    <div class="mut" style="margin-top:6px">数据保存在你的浏览器本地。后续可接入 Cloudinary / S3。</div>
+  </div>
+
+  <div class="grid" id="grid"></div>
 </div>
-<footer>© 2025 Dodva Universe</footer>
-</body></html>
+
+<script>
+const NS = 'du_gallery_v1';
+let items = []; // {id,name,dataURL,created}
+
+function save(){ localStorage.setItem(NS, JSON.stringify(items)); }
+function load(){
+  try{ items = JSON.parse(localStorage.getItem(NS)||'[]') }catch(e){ items=[] }
+  render();
+}
+function render(){
+  const g = document.getElementById('grid');
+  g.innerHTML = '';
+  items.forEach((it,i)=>{
+    const div = document.createElement('div');
+    div.className='item';
+    div.innerHTML = `
+      < img src="${it.dataURL}" alt="${it.name}">
+      <div class="meta">
+        <input type="text" value="${it.name}" data-i="${i}" />
+        <div class="row">
+          <button class="btn" data-del="${i}">删除</button>
+          <a download="${(it.name||'dodva')}.png" class="btn" href="${it.dataURL}">下载</a >
+          <span class="mut">${new Date(it.created).toLocaleString()}</span>
+        </div>
+      </div>`;
+    g.appendChild(div);
+  });
+  g.querySelectorAll('input[type="text"]').forEach(inp=>{
+    inp.onchange = e=>{ const i=+inp.dataset.i; items[i].name = inp.value.trim(); save(); }
+  });
+  g.querySelectorAll('[data-del]').forEach(btn=>{
+    btn.onclick = ()=>{ const i=+btn.dataset.del; items.splice(i,1); save(); render(); }
+  });
+}
+async function filesToItems(files){
+  for(const f of files){
+    if(!f.type.startsWith('image/')) continue;
+    const dataURL = await fileToDataURL(f);
+    items.unshift({id:crypto.randomUUID(),name:f.name.replace(/\.[^.]+$/,''),dataURL,created:Date.now()});
+  }
+  save(); render();
+}
+function fileToDataURL(file){
+  return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); });
+}
+
+// 选择/拖拽
+document.getElementById('fileInput').onchange = e=> filesToItems(e.target.files);
+const up = document.getElementById('uploader');
+up.ondragover = e=>{ e.preventDefault(); up.classList.add('drag'); };
+up.ondragleave= ()=> up.classList.remove('drag');
+up.ondrop = e=>{ e.preventDefault(); up.classList.remove('drag'); filesToItems(e.dataTransfer.files); };
+
+// 导出 JSON
+document.getElementById('exportJson').onclick = ()=>{
+  const blob = new Blob([JSON.stringify(items,null,2)],{type:'application/json'});
+  const a = Object.assign(document.createElement('a'), { href:URL.createObjectURL(blob), download:'dodva-gallery.json' });
+  a.click(); URL.revokeObjectURL(a.href);
+};
+// 导出 ZIP（占位：后续接入 JSZip） 
+document.getElementById('exportZip').onclick = ()=> alert('下一步接入 JSZip（把所有 dataURL 打包）。');
+
+// 清空
+document.getElementById('clearAll').onclick = ()=>{
+  if(confirm('清空本地画廊？此操作不可恢复。')){ items=[]; save(); render(); }
+};
+
+// —— 可选：接入 Cloudinary（后端免签名/或 Netlify Function）
+// 1) const url = 'https://api.cloudinary.com/v1_1/<cloud_name>/image/upload';
+// 2) 使用 unsigned preset：formData.append('upload_preset','<preset>');
+// 3) fetch(url,{method:'POST', body:formData}).then(r=>r.json())
+
+load();
+</script>
+<div class="bg"></div>
+<footer>© 2025 Dodva Universe Co️nnect ®🌌 创造·连接·无限·永恒 ∞</footer>
+</body>
+</html>
+

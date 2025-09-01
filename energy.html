@@ -1,0 +1,219 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>🔮 每日能量卡 · Energy Card</title>
+
+<style>
+  :root{--bg:#0b0b12;--card:#12121b;--ink:#f2f3ff;--mut:#9aa0b3;--line:#2a2f48;--pri:#8a7dff}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  .shell{max-width:900px;margin:0 auto;padding:20px 14px}
+  header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  h1{font-size:18px;margin:0}
+  .pill{border:1px solid var(--line);border-radius:999px;padding:2px 8px;color:var(--mut);font-size:12px}
+  .chat{background:var(--card);border:1px solid var(--line);border-radius:14px;min-height:58vh;padding:12px;display:flex;flex-direction:column;gap:10px}
+  .msg{display:flex;gap:10px}
+  .msg .who{width:34px;height:34px;border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;background:#0e0e16}
+  .msg .bubble{flex:1;border:1px solid var(--line);background:#0f0f17;border-radius:12px;padding:10px 12px;white-space:pre-wrap}
+  .me .who{border-color:#3b5566}
+  .bot .who{border-color:#6b5cff}
+  .mut{color:var(--mut)}
+  .inputBar{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;margin-top:10px}
+  textarea{resize:none;min-height:48px;border:1px solid var(--line);background:#0f0f17;color:var(--ink);border-radius:12px;padding:10px 12px}
+  button{border:1px solid var(--line);background:#12121b;color:var(--ink);border-radius:12px;padding:10px 14px;cursor:pointer}
+  button.primary{border-color:#574cff;background:linear-gradient(180deg,#1b1840,#12121b)}
+  .tips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .tip{border:1px dashed #3a3f59;color:#b8bed1;border-radius:999px;padding:4px 10px;font-size:12px;cursor:pointer}
+  .row{display:flex;gap:10px;align-items:center}
+  .ok{color:#9cffd1}
+  .warn{color:#ffdf9c}
+</style>
+<!-- 轻交互：每天换一张预览文案（不影响正式抽卡） -->
+
+<section class="dv-energy" id="dvEnergy">
+  <div class="row">
+    <div>
+      <h3>🔮 每日能量卡 · Energy Card</h3>
+      <div class="mut">选择主题 → 今天抽到一张卡（每日固定），可开启「预览模式」翻下一张。</div>
+    </div>
+    <div class="row">
+      <label class="mut">主题</label>
+      <select id="ecTheme">
+        <option value="healing">疗愈 Healing</option>
+        <option value="relationship">关系 Relationship</option>
+        <option value="wealth">财富 Wealth</option>
+      </select>
+      <button id="ecPreview" class="pill">👀 预览模式</button>
+    </div>
+  </div>
+
+  <div class="dv-card">
+    <div class="dv-badges">
+      <span class="dv-badge" id="ecBadge">Healing</span>
+      <span class="dv-badge" id="ecDate"></span>
+    </div>
+    <h4 class="dv-title" id="ecTitle">Because Love is Infinite</h4>
+    <p class="dv-text" id="ecText">把心放软，宇宙就会为你让出一条路。</p >
+  </div>
+
+  <div class="dv-foot">
+    <div class="row" style="gap:6px">
+      <button id="ecPrev">← 上一张</button>
+      <button id="ecNext">下一张 →</button>
+      <button id="ecLock" class="pill">🔒 锁定为今日</button>
+    </div>
+    <div class="row" style="gap:6px">
+ <div class="card">
+    <!-- 局部样式（随卡片一起贴就好） -->
+<style>
+  .dv-energy .pill{padding:10px 14px;border-radius:999px;border:1px solid rgba(147,197,253,.18);text-decoration:none;color:#cde3ff}
+  .dv-energy .pill.primary{background:linear-gradient(135deg,#a5b4fc,#67e8f9,#f0abfc);color:#051019;font-weight:800;box-shadow:0 8px 20px rgba(103,232,249,.22)}
+  .dv-energy .pill:hover{transform:translateY(-1px)}
+  .dv-energy .badge{border:1px solid rgba(147,197,253,.18);border-radius:999px;padding:2px 8px;font-size:12px;color:#cfe3ff}
+  @media (max-width:520px){ .dv-energy #ec-preview{padding:12px} }
+</style>
+
+
+      <div>
+        <a class="pill" href="crystal_eye.html">🧘 进入冥想</a >
+        <h3>🧘 每日冥想专属频道</h3>
+        <p>文案。 ？</p>
+      </div>
+       <div class="card">
+      <div>
+        <h3>🎁 生成 AI 礼物卡</h3>
+        <p>AI + 全息 + 情感干涉，一张会回应你的「宇宙爱卡」。</p>
+        <button id="ecGift" class="pill">🎁 生成 AI 礼物卡</button>
+      </div>
+       <div class="card">
+      <div>
+        <h3>🗺 占位板块 </h3>
+        <p>📋 文案/？ 收进DODVA 小宇宙，随时回看。</p>
+      </div>
+        <button id="ecCopy" class="pill">📋 复制文案</button>
+    </div>
+  </div>
+</section>
+
+<script>
+(function EnergyCard(){
+  // —— 1) 卡池（可随时增补）
+  const DECK = {
+    healing: [
+      {t:"Because Love is Infinite", x:"把心放软，宇宙就会为你让出一条路。"},
+      {t:"Gentle Reset", x:"今晚为自己按下重启键：睡个好觉，就是最好的修复。"},
+      {t:"Pink Quartz Breath", x:"吸气数四拍，呼气数六拍，想象粉晶在胸口发光。"}
+    ],
+    relationship: [
+      {t:"Two-Body Orbit", x:"彼此是恒星，不是卫星；靠近，但不失去自转。"},
+      {t:"Speak Softly", x:"把“你应该”换成“我感受”——奇迹就会发生。"},
+      {t:"Listening First", x:"先把对方说完，再给答案；理解是一份稀有的礼物。"}
+    ],
+    wealth: [
+      {t:"Tiny Flywheel", x:"今天做一件能复利的小事：写 100 字 / 看 10 页 / 跟一个人打招呼。"},
+      {t:"Time > Tactics", x:"方向对了，慢就是快；把力气花在不可逆的成长上。"},
+      {t:"Ship It", x:"别抛光到 100 分，60 分上线、每天 +2 分，才是创业节奏。"}
+    ]
+  };
+
+  // —— 2) DOM
+  const el = {
+    theme: document.getElementById('ecTheme'),
+    badge: document.getElementById('ecBadge'),
+    date:  document.getElementById('ecDate'),
+    title: document.getElementById('ecTitle'),
+    text:  document.getElementById('ecText'),
+    prev:  document.getElementById('ecPrev'),
+    next:  document.getElementById('ecNext'),
+    lock:  document.getElementById('ecLock'),
+    preview: document.getElementById('ecPreview'),
+    copy:  document.getElementById('ecCopy'),
+    gift:  document.getElementById('ecGift'),
+  };
+
+  // —— 3) 状态：按日固定；可预览翻页
+  const NS = 'du_energy_v1';
+  function today(){ return new Date().toISOString().slice(0,10); }
+  function load(){
+    try{ return JSON.parse(localStorage.getItem(NS)) || {}; }catch{ return {}; }
+  }
+  function save(s){ localStorage.setItem(NS, JSON.stringify(s)); }
+
+  let S = load();
+  if(!S.date) S.date = today(), S.locked = false, S.theme='healing', S.idx=0;
+  el.theme.value = S.theme || 'healing';
+  el.preview.dataset.on = '0';
+
+  function hash(str){
+    let h=2166136261>>>0;
+    for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619); }
+    return h>>>0;
+  }
+  function pickIndex(theme, date){
+    const n = DECK[theme].length;
+    return n ? hash(theme+'|'+date)%n : 0;
+  }
+
+  function render(){
+    const theme = S.theme;
+    el.badge.textContent =
+      theme==='healing'?'Healing':
+      theme==='relationship'?'Relationship':'Wealth';
+    el.date.textContent = S.date;
+
+    const deck = DECK[theme];
+    const idx = S.locked ? pickIndex(theme, S.date) : (S.idx % deck.length + deck.length)%deck.length;
+    const card = deck[idx];
+
+    el.title.textContent = card.t;
+    el.text.textContent  = card.x;
+
+    el.lock.textContent = S.locked ? '🔓 解除锁定' : '🔒 锁定为今日';
+    el.preview.textContent = (el.preview.dataset.on==='1') ? '✅ 预览中' : '👀 预览模式';
+  }
+
+  function lockToggle(){
+    // 锁定：今日固定（由主题+日期确定）；解除：进入预览态
+    S.locked = !S.locked;
+    if(S.locked){ S.date = today(); S.idx = pickIndex(S.theme, S.date); el.preview.dataset.on='0'; }
+    save(S); render();
+  }
+
+  // —— 4) 事件
+  el.theme.addEventListener('change', ()=>{
+    S.theme = el.theme.value;
+    // 切换主题时，如果是锁定态，就用今日索引；否则从 0 开始
+    S.idx = S.locked ? pickIndex(S.theme, S.date) : 0;
+    save(S); render();
+  });
+
+  el.prev.addEventListener('click', ()=>{ if(S.locked && el.preview.dataset.on!=='1') return; S.idx--; save(S); render(); });
+  el.next.addEventListener('click', ()=>{ if(S.locked && el.preview.dataset.on!=='1') return; S.idx++; save(S); render(); });
+  </script>
+  <script>
+(function(){
+  const seeds = [
+    {t:'《你已经很足够》', x:'把“应该”换成“我选择”。今天的你更自由。', a:['主题：自我','心情：轻松']},
+    {t:'《慢慢来会更快》', x:'先呼一口长气，再迈出一步，小事做对，宇宙会让道。', a:['主题：节律','心情：温柔']},
+    {t:'《把分心变成风景》', x:'分心来了，就看一眼它，再把注意力放回当下。', a:['主题：专注','心情：清澈']},
+    {t:'《把害怕折成纸鹤》', x:'装进口袋，带着它一起出发。', a:['主题：勇气','心情：安定']},
+    {t:'《宇宙在为你让位》', x:'今天适合开始一件你一直想做的小事。', a:['主题：行动','心情：轻盈']},
+  ];
+  const d = new Date(); // 以日期做“日更随机”
+  const idx = (d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate()) % seeds.length;
+  const s = seeds[idx];
+  const $ = id => document.getElementById(id);
+  if ($('ec-title')) $('ec-title').textContent = s.t;
+  if ($('ec-text'))  $('ec-text').textContent  = s.x;
+  const preview = document.getElementById('ec-preview');
+  if (preview){
+    const b = preview.querySelectorAll('.badge');
+    b[0] && (b[0].textContent = s.a[0]||'');
+    b[1] && (b[1].textContent = s.a[1]||'');
+  }
+})();
+</script>
+</body>
+</html>

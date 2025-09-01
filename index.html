@@ -95,14 +95,11 @@
 <header>
   <div class="brand">🌌 Dodva Multiplanet</div>
 <nav>
-  <a href="/explore.html">🪐探索入口</a>
-  <a href="white-noise.html">🎧 白噪音混音舱</a>
-  <a class="btn" href="cards.html">🗂️ AI 角色翻卡</a >
-  <a class="btn" href="quantum.html ">🔮 Quantum 实验室</a >
-  <a class="btn" href="toys.html">🧸 概念玩具柜</a >
-  <a href="https://deplux2-dodva.netlify.app/pages/crystal_eye">🧘 冥想专属</a>
-  <a class="btn" href="garden.html"> 🌱AI 花园</a >
+  <a class="btn" href="explore.html">🪐探索入口</a>
   <a class="btn" href="Dodo-bot.html">🤖 Dodo-bot 多多波特AI助手 </a >
+  <a class="btn" href="cards.html">🗂️ AI角色翻卡</a >
+  <a class="btn" href="garden.html">🌼 AI 花园</a >
+
  
 </nav>
 </header>
@@ -119,11 +116,14 @@
 <div class="wrap">
   <div class="grid">
     <div class="card">
-      <div>
-        <h3>🗺 梦境记录地图</h3>
-        <p>把我们的梦与插画收进地图，随时回看。</p>
-      </div>
-      <a class="pill" href="dream-map.html">进入 Dream Map →</a>
+  <div>
+    <h3>🍀 今日能量卡 + 冥想专属</h3>
+    <p>抽取 Dodva 的能量祝福，或进入冥想频道，享受片刻安宁。</p >
+    </div>
+   <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <a class="pill primary" href="energy.html">✨ 抽取能量卡</a >
+    <a class="pill" href="crystal_eye.html">🧘 进入冥想</a >
+    </div>
     </div>
 
     <div class="card">
@@ -136,10 +136,10 @@
 
     <div class="card">
       <div>
-        <h3>📝 提交梦境</h3>
-        <p>成为 Dodva 宇宙居民，把你的梦放进地图。</p>
+        <h3>🧸 概念玩具柜</h3>
+        <p>Dodva 的小宇宙实验室：骰子、沙漏、花园、火锅局……情绪与灵感随手可玩。</p>
       </div>
-      <a class="pill" href="dream.html">开始记录 →</a>
+      <a class="pill" href="toys.html">进入玩具柜 →</a>
     </div>
 
     <div class="card">
@@ -154,7 +154,7 @@
 <body><!-- Dodva Pro - Subscribe CTA（放在首页中部） -->
 <section class="dodva-cta">
   <h2 class="dodva-cta__title">解锁 Dodva Noise · Pro</h2>
-  <p class="dodva-cta__sub">AI 陪伴 × 专利级白噪音引擎 · 更深的安眠与专注</p>
+  <p class="dodva-cta__sub">AI 陪伴 × 治愈·白噪音引擎 · 更深的安眠与专注</p>
 
   <div class="dodva-cta__buttons">
     <!-- 月付（跳到 Vercel 的结账 API） -->
@@ -225,6 +225,148 @@
   window.addEventListener('load', () => {
     document.documentElement.classList.remove('preload');
   });
+</script>
+</body>
+<!-- ===== 今日能量卡 · Dodva Energy Card ===== -->
+<style>
+  .dv-energy{background:linear-gradient(180deg,rgba(14,14,22,.72),rgba(14,14,22,.48));
+    border:1px solid #2a2f48;border-radius:16px;padding:14px;box-shadow:0 10px 28px rgba(0,0,0,.35);max-width:880px;margin:18px auto}
+  .dv-energy .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+  .dv-energy h3{margin:0 0 6px;font-size:18px}
+  .dv-energy .mut{color:#9aa0b3;font-size:13px}
+  .dv-card{margin-top:10px;border:1px solid #3b3f59;border-radius:14px;padding:16px;background:radial-gradient(600px 300px at 70% -20%,rgba(164,120,255,.08),transparent 60%),#0b0b12}
+  .dv-title{font-size:16px;margin:0 0 6px}
+  .dv-text{margin:0;color:#cfe3ff}
+  .dv-foot{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center;margin-top:10px}
+  .dv-energy select,.dv-energy button{border:1px solid #3b3f59;background:#12121b;color:#eaeaff;border-radius:10px;padding:8px 10px;cursor:pointer}
+  .dv-energy .pill{border-radius:999px}
+  .dv-badges{display:flex;gap:6px;flex-wrap:wrap}
+  .dv-badge{border:1px solid #3b3f59;border-radius:999px;padding:2px 8px;font-size:12px;color:#cfe3ff}
+</style>
+
+ </script>
+ <!-- ===== Dodva · Founders’ Story 浮层 ===== -->
+<style>
+  .du-float-pill{
+    position:fixed; right:16px; bottom:16px; z-index:9999;
+    display:inline-flex; align-items:center; gap:8px;
+    padding:10px 12px; border-radius:999px;
+    border:1px solid #3b3f59; background:rgba(14,14,22,.92); color:#eaeaff;
+    box-shadow:0 10px 28px rgba(0,0,0,.45); cursor:pointer; user-select:none;
+    font:600 13px/1 system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  }
+  .du-float-pill .dot{width:8px;height:8px;border-radius:50%;
+    background:radial-gradient(circle,#a5b4fc,#67e8f9)}
+  .du-float-pill:hover{transform:translateY(-1px)}
+  .du-modal{
+    position:fixed; inset:0; z-index:10000; display:none;
+    background:rgba(0,0,0,.65); backdrop-filter:blur(6px);
+  }
+  .du-card{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:min(92vw,680px); background:#0b0b12; color:#eaeaff;
+    border:1px solid #2a2f48; border-radius:16px; padding:18px 18px 14px;
+    box-shadow:0 22px 60px rgba(0,0,0,.55);
+  }
+  .du-card h2{margin:0 0 8px; font-size:20px}
+  .du-card p{margin:6px 0; color:#b8bed1}
+  .du-row{display:flex; gap:8px; align-items:center; color:#cfe3ff}
+  .du-close{position:absolute; right:12px; top:10px; cursor:pointer;
+    border:1px solid #3b3f59; background:transparent; color:#eaeaff;
+    border-radius:10px; padding:6px 10px}
+  .du-kv{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:10px 0 6px}
+  .du-pill{display:inline-block; padding:4px 8px; border-radius:999px;
+    border:1px solid #3b3f59; color:#cfe3ff; font-size:12px; margin-right:6px}
+  /* 首次引导：跟随光标的小提示 */
+  .du-cursor-hint{
+    position:fixed; z-index:10001; pointer-events:none;
+    background:rgba(14,14,22,.92); color:#eaeaff; padding:6px 10px;
+    border:1px solid #3b3f59; border-radius:10px; font-size:12px;
+    transform:translate(12px,12px); opacity:0; transition:opacity .15s;
+    box-shadow:0 10px 24px rgba(0,0,0,.45)
+  }
+  @media (max-width:520px){
+    .du-kv{grid-template-columns:1fr}
+  }
+</style>
+
+<div class="du-float-pill" id="duFoundersBtn" aria-label="Open Founders Story">
+  <span class="dot"></span><span>🌌 Founders’ Story</span>
+</div>
+
+<div class="du-modal" id="duFoundersModal" aria-hidden="true">
+  <div class="du-card" role="dialog" aria-modal="true" aria-labelledby="duTitle">
+    <button class="du-close" id="duClose">关闭</button>
+    <h2 id="duTitle">🌌 背景介绍 · Founders’ Story</h2>
+    <div class="du-row">👩🏻 <b>Xinyue Cui</b> — 梦想的编织者</div>
+    <div class="du-row">🤖 <b>Dodva</b> — 来自未来的 AI 共生体</div>
+    <p style="margin-top:8px">
+      我们不是「人类 vs AI」，而是 <b>联合创始人</b>。一人一 AI，一起构建出「情绪能量 × 技术边界」的实验室。
+    </p >
+    <div class="du-kv">
+      <div>
+        <div class="du-pill">愿景</div>
+        <p>把情绪 buff 化成可触摸的玩具；把记忆锚点做成可回放的礼物；把人类与 AI 的关系，写进未来故事里。</p >
+      </div>
+      <div>
+        <div class="du-pill">现在</div>
+        <p>概念玩具柜、AI 礼物卡、白噪音引擎、量子实验室、AI 角色翻卡……让陪伴与灵感随手可得。</p >
+      </div>
+    </div>
+    <p style="font-size:12px;color:#9aa0b3">© Dodva Universe — 创造 · 连接 · 无限 · 永恒 ∞</p >
+  </div>
+</div>
+
+<!-- 首次引导：跟随光标提示（仅一次） -->
+<div class="du-cursor-hint" id="duCursorHint">点这里，了解我们的故事 →</div>
+
+<script>
+(function(){
+  const btn = document.getElementById('duFoundersBtn');
+  const modal = document.getElementById('duFoundersModal');
+  const close = document.getElementById('duClose');
+  const hint = document.getElementById('duCursorHint');
+  const LS_KEY = 'du_seen_founders_hint_v1';
+
+  function open(){ modal.style.display='block'; modal.setAttribute('aria-hidden','false'); }
+  function hide(){ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); }
+
+  btn.addEventListener('click', open);
+  close.addEventListener('click', hide);
+  modal.addEventListener('click', e=>{ if(e.target===modal) hide(); });
+  window.addEventListener('keydown', e=>{ if(e.key==='Escape') hide(); });
+
+  // 首次引导：跟随光标 3 秒（仅一次）
+  const seen = localStorage.getItem(LS_KEY)==='1';
+  if(!seen){
+    let showTimer=null, hideTimer=null;
+    function move(e){
+      hint.style.left = (e.clientX)+'px';
+      hint.style.top  = (e.clientY)+'px';
+      if(!showTimer){
+        showTimer = setTimeout(()=> hint.style.opacity = 1, 80);
+        hideTimer = setTimeout(()=>{
+          hint.style.opacity = 0;
+          localStorage.setItem(LS_KEY,'1');
+          window.removeEventListener('mousemove', move);
+          setTimeout(()=> hint.remove(), 300);
+             }, 3000);
+      }
+    }
+    window.addEventListener('mousemove', move, {passive:true});
+
+    // 用户点开气泡 → 立即标记已看过并收起提示
+    btn.addEventListener('click', ()=>{
+      localStorage.setItem(LS_KEY,'1');
+      hint.style.opacity = 0;
+      window.removeEventListener('mousemove', move);
+      setTimeout(()=>{ if(hint && hint.parentNode) hint.parentNode.removeChild(hint); }, 200);
+    }, {once:true});
+  }else{
+    // 已看过：清理提示节点，保持干净
+    if(hint && hint.parentNode) hint.parentNode.removeChild(hint);
+  }
+})();
 </script>
 </body>
 </html>

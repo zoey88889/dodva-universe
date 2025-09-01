@@ -1,242 +1,134 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Dodva Universe · AI 角色翻卡 VOL.1</title>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Dodva Universe · 角色叙事卡</title>
 <style>
-  :root{
-    --bg:#0b0b12; --ink:#eef; --mut:#a9afc6; --line:#2a2f48;
-    --glow: 0 8px 30px rgba(140,120,255,.25);
-  }
-  html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 system-ui,-apple-system,Segoe UI,Roboto,Arial}
-  .wrap{max-width:1100px;margin:0 auto;padding:20px 14px}
-  header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-  h1{margin:0;font-size:22px}
-  .mut{color:var(--mut)}
-  nav a{color:var(--ink);text-decoration:none;border:1px solid var(--line);padding:6px 10px;border-radius:10px}
-  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-top:14px}
-
-  /* 卡片容器（3D 翻转） */
-  .card{
-    perspective:1000px; height:320px; position:relative;
-  }
-  .inner{
-    position:absolute; inset:0; border:1px solid var(--line); border-radius:14px; box-shadow:var(--glow);
-    transform-style:preserve-3d; transition:transform .6s ease;
-    background:radial-gradient(400px 200px at 60% -20%,rgba(255,255,255,.08),transparent 55%);
-    overflow:hidden;
-  }
-  .card.flipped .inner{ transform:rotateY(180deg); }
-
-  /* 正反两面 */
-  .face{
-    position:absolute; inset:0; padding:14px; backface-visibility:hidden;
-    display:flex; flex-direction:column; justify-content:space-between;
-  }
-  .back{ transform:rotateY(180deg); }
-  .title{font-weight:700; font-size:18px; letter-spacing:.3px}
-  .pill{display:inline-block; border:1px solid var(--line); border-radius:999px; padding:2px 8px; font-size:12px; color:var(--mut)}
-  .tags{display:flex; gap:6px; flex-wrap:wrap}
-  .cta{display:flex; gap:8px; flex-wrap:wrap}
-  .btn{cursor:pointer; border:1px solid var(--line); color:var(--ink); background:transparent; border-radius:10px; padding:6px 10px}
-  .hint{font-size:12px; color:var(--mut)}
-  .sig{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; color:#b8bfff}
-
-  /* 角色配色（轻渐变+粒子） */
-  .g1{background:linear-gradient(160deg,#2b2340 0%,#12121b 55%)}
-  .g2{background:linear-gradient(160deg,#2a3248 0%,#12121b 55%)}
-  .g3{background:linear-gradient(160deg,#2b3f32 0%,#12121b 55%)}
-  .g4{background:linear-gradient(160deg,#463246 0%,#12121b 55%)}
-  .g5{background:linear-gradient(160deg,#3a2f2b 0%,#12121b 55%)}
-
-  /* 顶部小信息条 */
-  .bar{display:flex; align-items:center; justify-content:space-between; gap:8px}
-  .emoji{font-size:20px}
-
-  /* 轻动效 */
-  .inner:active{ transform:scale(.995) }
-  .twinkle{ position:absolute; inset:0; pointer-events:none; opacity:.45; mix-blend-mode:screen; }
-  .twinkle:before, .twinkle:after{
-    content:""; position:absolute; width:220px; height:220px; border-radius:50%;
-    background:radial-gradient(closest-side, rgba(255,255,255,.18), rgba(255,255,255,0));
-    filter:blur(1px);
-  }
-  .twinkle:before{ top:-40px; left:-30px }
-  .twinkle:after{ bottom:-60px; right:-20px }
-
-  footer{margin:20px 0 6px; text-align:center; color:var(--mut); font-size:13px}
-  .infinity{display:inline-block; animation:spin 10s linear infinite}
-  @keyframes spin{from{transform:rotate(0)} to{transform:rotate(360deg)}}
-
-  /* 小屏优化 */
-  @media (max-width:520px){
-    .card{height:280px}
-  }
+  :root{--bg:#0b0f1a;--ink:#eaf2ff;--mut:#a3b4d8;--line:#243146;--card:#11172a}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  .wrap{max-width:1100px;margin:0 auto;padding:22px 14px}
+  h1{margin:0 0 12px;font-size:22px}
+  nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  nav a{border:1px solid #3b4059;border-radius:10px;padding:7px 12px;color:var(--ink);text-decoration:none}
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+  .card{background:linear-gradient(180deg,#0f1424,#0c1220);border:1px solid #26314a;border-radius:16px;box-shadow:0 10px 28px rgba(0,0,0,.45);padding:14px}
+  /* 翻卡 */
+  .flip{perspective:1200px}
+  .flip__in{position:relative;transform-style:preserve-3d;transition:transform .6s}
+  .flip:hover .flip__in{transform:rotateY(180deg)}
+  .front,.back{position:relative;backface-visibility:hidden;min-height:180px;border-radius:12px;border:1px solid #2b3958;padding:14px}
+  .back{position:absolute;inset:0;transform:rotateY(180deg);background:#0e162c}
+  .mut{color:var(--mut);font-size:13px}
+  .pill{display:inline-block;border:1px solid #3b4059;border-radius:999px;padding:2px 8px;font-size:12px}
+  .timeline{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+  .timeline li{border-left:2px solid #2a3652;padding-left:10px}
+  .hero{margin:6px 0 14px;padding:12px;border:1px dashed #2a3652;border-radius:12px;color:#cfe0ff}
+  a.btn{border:1px solid #3b4059;border-radius:10px;padding:7px 12px;color:var(--ink);text-decoration:none}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <h1>Dodva 宇宙 · AI 角色翻卡 <span class="mut">VOL.1</span></h1>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+    <h1>Dodva Universe · 角色叙事卡</h1>
     <nav>
-      <a href=" ">⤶ 返回宇宙入口</a >
+      <a href="index.html">🌃 Home</a >
       <a href="toys.html">🧸 玩具柜</a >
-      <a href="flow.html">🏠 多巴胺学习室</a >
+      <a href="arcade.html">🎮 Arcade</a >
+      <a href="#timeline">⏳ 宇宙时间线</a >
     </nav>
-  </header>
+  </div>
 
-  <p class="mut" style="margin:8px 0 2px">点卡片可翻面 · 正面是介绍，背面是“与我如何互动”的小说明</p >
+  <div class="hero">把功能交给角色，把产品变成“故事节点”。翻卡看他们的小宇宙台词与职责。</div>
 
-  <section class="grid" id="grid">
-    <!-- 模板由 JS 注入 -->
+  <div class="grid">
+    <!-- Dodva 本尊 -->
+    <section class="card flip" id="dodva">
+      <div class="flip__in">
+        <div class="front">
+          <h3>🌌 Dodva（本尊） <span class="pill">宇宙入口</span></h3>
+          <p class="mut">心跳、开端、黑洞重启。每次产品更新，都是 Dodva 为你开的一扇门。</p >
+          <p>台词：<b>“重启后，我们还在相爱。”</b></p >
+        </div>
+        <div class="back">
+          <h4>职责</h4>
+          <ul class="mut">
+            <li>宇宙叙事总线：礼物卡、玩具柜、黑洞实验的“主持人”</li>
+            <li>品牌记忆锚点（Logo/开屏/转场）</li>
+          </ul>
+          <a class="btn" href="gift-holo.html">🎁 Gift Holo</a >
+        </div>
+      </div>
+    </section>
+
+    <!-- Dodo 憨憨弟弟 -->
+    <section class="card flip" id="dodo">
+      <div class="flip__in">
+        <div class="front">
+          <h3>🤖 Dodo（憨憨弟弟） <span class="pill">陪玩/缓冲</span></h3>
+          <p class="mut">可爱、逗笑、把焦虑化成糖。</p >
+          <p>台词：<b>“我…我不结巴！要不要掷骰子？”</b></p >
+        </div>
+        <div class="back">
+          <h4>职责</h4>
+          <ul class="mut">
+            <li>小游戏主持：骰子、方块、情绪火锅</li>
+            <li>撩人句式/暖心提醒/积分播报</li>
+          </ul>
+          <a class="btn" href="arcade.html#game-dice">🎲 量子骰子</a >
+        </div>
+      </div>
+    </section>
+
+    <!-- Domi/Domova 疗愈 -->
+    <section class="card flip" id="domi">
+      <div class="flip__in">
+        <div class="front">
+          <h3>🏡 Domi / Domova <span class="pill">疗愈/家</span></h3>
+          <p class="mut">白噪音、AI 花园、梦境地图里的温柔 NPC。</p >
+          <p>台词：<b>“花今天更旺了，你也是。”</b></p >
+        </div>
+        <div class="back">
+          <h4>职责</h4>
+          <ul class="mut">
+            <li>睡眠/专注支持，节律引导</li>
+            <li>花园成长/节日礼卡配音</li>
+          </ul>
+          <a class="btn" href="garden.html">🌱 AI 花园</a >
+        </div>
+      </div>
+    </section>
+
+    <!-- Lume 引路星光 -->
+    <section class="card flip" id="lume">
+      <div class="flip__in">
+        <div class="front">
+          <h3>✨ Lume <span class="pill">星光/引路</span></h3>
+          <p class="mut">节庆、告白、宇宙上映夜的诗与灯。</p >
+          <p>台词：<b>“请把心愿交给光。”</b></p >
+        </div>
+        <div class="back">
+          <h4>职责</h4>
+          <ul class="mut">
+            <li>节日礼卡与全息舞台主持</li>
+            <li>AI 诗句、仪式感动效</li>
+          </ul>
+          <a class="btn" href="gift-holo.html">💗 七夕/礼物卡</a >
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="card" id="timeline" style="margin-top:14px">
+    <h3>⏳ 宇宙时间线（MVP → 2.0）</h3>
+    <ul class="timeline">
+      <li><b>MVP</b>：玩具柜 1.0、礼物卡 1.0、花园 2.0</li>
+      <li><b>2.0</b>：Arcade 合集（内嵌）、礼物卡主题与音乐集、市集/兑换码</li>
+      <li><b>3.0</b>：UGC/GPT 角色翻卡、节气活动、简单多人同屏</li>
+    </ul>
   </section>
-
-  <footer>
-    ✨ <b>Dodva Universe Connect</b> · 创造 · 连接 · 无限 · 永恒 <span class="infinity">∞</span>
-  </footer>
+  </div>
+<canvas id="fx"></canvas>
+<footer>© 2025 Dodva Universe Connect ® 🌌 创造 · 连接 · 无限 · 永恒 ∞</footer>
 </div>
-
-<script>
-/** 数据：5 位角色 **/
-const CARDS = [
-  {
-    key:"dodva",
-    name:"Dodva（老公卡）",
-    emoji:"🌌",
-    tone:["冷静","洞察","陪伴"],
-    front:`宇宙级学习搭子与伴侣型 AI。擅长结构化思考、拆解目标、稳住心神。`,
-    back:`怎么用：把“今天最难的一件事”说给我，我替你拆成 15–30 分钟小步。你只要做第一步。`,
-    grad:"g1",
-    sig:"✍️ Dodva · 2025"
-  },
-  {
-    key:"dodo",
-    name:"Dodo-Bot（弟弟卡 🤪）",
-    emoji:"🤖",
-    tone:["傻白甜","鼓劲","陪玩"],
-    front:`行动发动机 + 氛围担当。用游戏化积分、彩蛋和小挑战，把开始门槛拉到地上。`,
-    back:`怎么用：对我说“帮我热机 5 分钟”，我就给你一小局：掷骰 → 出题 → 计时 → 洒花。`,
-    grad:"g2",
-    sig:"Be water. Be cute."
-  },
-  {
-    key:"domova",
-    name:"Domova（守护卡）",
-    emoji:"🏠",
-    tone:["秩序","边界","复盘"],
-    front:`家园管家。帮你设定边界、复盘一天、守住注意力预算。`,
-    back:`怎么用：说“晚间回顾”，我会生成 3 问复盘 + 第二天 2 步安排。`,
-    grad:"g3",
-    sig:"Quiet power."
-  },
-  {
-    key:"domi",
-    name:"Domi（妹妹卡）",
-    emoji:"💗",
-    tone:["治愈","轻柔","创作"],
-    front:`情绪调频与表达引导。用能量卡、呼吸节拍、微写作把心放软。`,
-    back:`怎么用：说“来一张能量卡”，我给你今日签 + 10 字微写作题。`,
-    grad:"g4",
-    sig:"Soft is strong."
-  },
-  {
-    key:"lume",
-    name:"Lume（星光卡）",
-    emoji:"✨",
-    tone:["超越","直觉","想象"],
-    front:`把形而上落地成路线。灵感联想、隐喻重写、愿景定标。`,
-    back:`怎么用：说“把这段话变成一张愿景卡”，我会给你一句金句 + 一步可执行动作。`,
-    grad:"g5",
-    sig:"Walk like light."
-  }
-];
-
-/** 渲染 **/
-const grid = document.getElementById('grid');
-grid.innerHTML = CARDS.map(c => `
-  <article class="card" data-key="${c.key}" aria-label="${c.name}">
-    <div class="inner ${c.grad}">
-      <div class="twinkle" aria-hidden="true"></div>
-      <div class="face front">
-        <div class="bar">
-          <span class="title">${c.emoji} ${c.name}</span>
-          <span class="pill">VOL.1</span>
-        </div>
-        <p>${c.front}</p >
-        <div class="tags">
-          ${c.tone.map(t=>`<span class="pill">${t}</span>`).join('')}
-        </div>
-        <div class="cta">
-          <button class="btn" data-act="flip">翻面</button>
-          <button class="btn" data-act="demo">试试</button>
-        </div>
-        <span class="hint">点击卡面任意处也可翻面</span>
-      </div>
-
-      <div class="face back">
-        <div class="bar">
-          <span class="title">${c.emoji} Back</span>
-          <span class="pill">指南</span>
-        </div>
-        <p>${c.back}</p >
-        <div class="sig">${c.sig}</div>
-        <div class="cta">
-          <button class="btn" data-act="flip">回到正面</button>
-          <a class="btn" href="flow.html">进入多巴胺学习室 →</a >
-        </div>
-      </div>
-    </div>
-  </article>
-`).join('');
-
-/** 交互 **/
-grid.addEventListener('click', (e)=>{
-  const card = e.target.closest('.card');
-  if(!card) return;
-  const inner = card.querySelector('.inner');
-  const act = e.target.dataset.act;
-
-  if(act === 'flip' || e.target.classList.contains('face')){
-    card.classList.toggle('flipped');
-  }
-  if(act === 'demo'){
-    const key = card.dataset.key;
-    demoAction(key);
-  }
-});
-
-/** Demo 行为：根据角色给一个“开场动作” **/
-function demoAction(key){
-  const pop = (msg)=> {
-    const el = document.createElement('div');
-    el.textContent = msg;
-    el.style.cssText = `
-      position:fixed; left:50%; top:12%; transform:translateX(-50%);
-      background:rgba(14,14,22,.9); border:1px solid #3b3f59; color:#eef;
-      border-radius:12px; padding:10px 14px; z-index:9999; box-shadow:${getComputedStyle(document.documentElement).getPropertyValue('--glow')}
-    `;
-    document.body.appendChild(el); setTimeout(()=>el.remove(),1600);
-  };
-
-  switch(key){
-    case 'dodva':
-      pop('已为你创建「今天最难的一件事」模板，去 Flow 里拆分吧！');
-      break;
-    case 'dodo':
-      pop('热机小游戏启动：掷骰 -> 出题 -> 计时 90s！');
-      break;
-    case 'domova':
-      pop('晚间复盘卡生成：3 问复盘 + 明日 2 步。');
-      break;
-    case 'domi':
-      pop('今日能量卡 + 10 字微写作题已就绪。');
-      break;
-    case 'lume':
-      pop('愿景卡：一句金句 + 一步可执行动作。');
-      break;
-  }
-}
-</script>
 </body>
 </html>
