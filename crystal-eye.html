@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Dodva · 粉晶冥想</title>
+<style>
+  :root{--bg:#0b0f1a;--fg:#eef3ff;--mut:#a3b4d8;--line:#2a2f48}
+  html,body{margin:0;background:radial-gradient(900px 600px at 70% -10%,rgba(255,182,193,.14),transparent 60%),#0b0f1a;color:var(--fg);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  header{position:sticky;top:0;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,rgba(14,14,22,.7),rgba(14,14,22,.45));backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .btn{border:1px solid #3b3f59;border-radius:10px;padding:7px 12px;background:#12121b;color:#eaf2ff;cursor:pointer}
+  .wrap{max-width:920px;margin:0 auto;padding:16px}
+  .panel{border:1px solid var(--line);border-radius:16px;padding:16px;background:linear-gradient(180deg,rgba(14,14,22,.9),rgba(14,14,22,.6));box-shadow:0 10px 28px rgba(0,0,0,.45)}
+  .mut{color:var(--mut);font-size:13px}
+  .ring{width:180px;height:180px;border-radius:50%;margin:6px auto;background:
+    radial-gradient(60px 60px at 50% 55%,rgba(255,255,255,.12),transparent 60%),
+    radial-gradient(600px 400px at 50% -20%,rgba(255,192,203,.16),transparent 60%),
+    #0b0f1a;border:1px solid var(--line);display:grid;place-items:center;transition:transform .6s ease}
+  .ring.big{transform:scale(1.06)}
+  .h{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+  select{border:1px solid #3b3f59;background:#12121b;color:#eaf2ff;border-radius:10px;padding:7px 10px}
+  label{display:inline-flex;gap:6px;align-items:center}
+</style>
+</head>
+<body>
+<header>
+  <div class="h">
+    <a class="btn" href="index.html">🏠 Home</a >
+    <button class="btn" onclick="DUi18n.toggle()" id="langBtn">🌐 EN/中文</button>
+  </div>
+  <button class="btn" onclick="duPay.modal()" data-i18n="cta.subscribe">💎 订阅 Pro</button>
+</header>
+
+<div class="wrap">
+  <div class="panel">
+    <h2 style="margin:.2em 0" data-i18n="med.title">粉晶冥想 · 呼吸引导</h2>
+    <p class="mut" data-i18n="med.tip">跟随光环：吸气 4｜停 4｜呼气 6。选择频率与环境层，按「开始」。</p >
+
+    <div class="ring" id="ring"><div id="timer" class="mut">00:00</div></div>
+
+    <div class="h">
+      <button class="btn" id="startBtn" data-i18n="med.start">开始</button>
+      <button class="btn" id="pauseBtn" data-i18n="med.pause">暂停</button>
+      <button class="btn" id="resetBtn" data-i18n="med.reset">重置</button>
+      <select id="hz">
+        <option value="432">432Hz</option>
+        <option value="528" selected>528Hz</option>
+        <option value="639">639Hz</option>
+      </select>
+      <label><input type="checkbox" id="envRain"/> 🌧 Rain</label>
+      <label><input type="checkbox" id="envForest"/> 🌲 Forest</label>
+      <label><input type="checkbox" id="envOcean"/> 🌊 Ocean</label>
+      <label><input type="checkbox" id="pink"/> Pink</label>
+    </div>
+  </div>
+</div>
+
+<script src="du-i18n.js"></script>
+<script src="du-pay.js"></script>
+<script>
+    
+// ===== WebAudio 引擎（纯前端无外链） =====
+let AC, master, toneOsc, toneGain, noiseNode, noiseGain;
+let env = {rain:null, forest:null, ocean:null};
+function ensureAC(){
+  if (AC) return;
+  AC = new (window.AudioContext||window.webkitAudioContext)();
+  master = AC.createGain(); master.gain.value=0.8; master.connect(AC.destination);
+  // 主旋律：正弦 + 轻门限
+  toneOsc = AC.createOscillator(); toneOsc.type='sine';
+  toneGain= AC.createGain(); toneGain.gain.value=0.0;
+  toneOsc.connect(toneGain); toneGain.connect(master); toneOsc.start();
+
+  // 粉噪：用白噪+滤波近似
+  noiseGain = AC.createGain(); noiseGain.gain.value=0.0; noiseGain.connect(master);
+  noiseNode = AC.createBufferSource();
+  const buf = AC.createBuffer(1, AC.sampleRate*2, AC.sampleRate);
+  const d = buf.getChannelData(0);
+  for(let i=0;i<d.length;i++){ d[i] = Math.random()*2-1; } // white
+  noiseNode.buffer=buf; noiseNode.loop=true;
+  // 3 段滤波叠加近似 pink
+  const b1=AC.createBiquadFilter(); b1.type='lowpass'; b1.frequency.value=800;
+  const b2=AC.createBiquadFilter(); b2.type='lowpass'; b2.frequency.value=1600;
+  const b3=AC.createBiquadFilter(); b3.type='highpass'; b3.frequency.value=40;
+  noiseNode.connect(b1); b1.connect(b2); b2.connect(b3); b3.connect(noiseGain);
+  noiseNode.start();
+}
+
+function setFreq(hz){ if(!AC) return; toneOsc.frequency.setValueAtTime(+hz, AC.currentTime); }
+function fade(param, to, ms=300){
+  const t=AC.currentTime; param.cancelScheduledValues(t);
+  param.linearRampToValueAtTime(to, t + ms/1000);
+}
+
+// 环境层：用不同滤波与 LFO 模拟
+function envOn(name, on){
+  if(!AC) return;
+  if(on && !env[name]){
+    const g = AC.createGain(); g.gain.value=0.0; g.connect(master);
+    const src = AC.createBufferSource(); src.buffer=noiseNode.buffer; src.loop=true;
+    const f = AC.createBiquadFilter(); f.type = (name==='ocean'?'lowpass':'bandpass');
+    f.frequency.value = name==='rain'? 4000 : name==='forest'? 2500 : 400;
+    f.Q.value = name==='rain'? 0.7 : name==='forest'? 1.2 : 0.8;
+    // LFO
+    const lfo = AC.createOscillator(); const lfoGain=AC.createGain();
+    lfo.frequency.value = name==='ocean'? 0.08 : name==='forest'? 0.3 : 0.6;
+    lfoGain.gain.value = name==='ocean'? 0.28 : name==='forest'? 0.12 : 0.06;
+    lfo.connect(lfoGain); lfoGain.connect(g.gain);
+
+    src.connect(f); f.connect(g); src.start(); lfo.start();
+    env[name]={g,src,lfo,lfoGain};
+    fade(g.gain, name==='rain'?0.18: name==='forest'?0.14: 0.2, 600);
+  }
+  if(!on && env[name]){
+    fade(env[name].g.gain, 0.0, 400);
+    setTimeout(()=>{ try{env[name].src.stop();env[name].lfo.stop();}catch(e){}; env[name]=null; }, 450);
+  }
+}
+
+// ===== 呼吸引导（4-4-6） =====
+let timer=null, secs=0, playing=false;
+const ring = document.getElementById('ring'), timerEl = document.getElementById('timer');
+function tick(){
+  secs++; timerEl.textContent = new Date(secs*1000).toISOString().substr(14,5);
+  const cycle = secs%14; // 4-4-6
+  if(cycle===0||cycle===4||cycle===8){ ring.classList.add('big'); fade(toneGain.gain, 0.16, 500); }
+  if(cycle===8){ /*停顿*/ fade(toneGain.gain, 0.06, 400); }
+  if(cycle>8){ ring.classList.remove('big'); fade(toneGain.gain, 0.10, 500); }
+}
+function start(){
+  ensureAC(); AC.resume();
+  playing=true; setFreq(document.getElementById('hz').value);
+  fade(toneGain.gain, 0.12, 500);
+  if(!timer) timer=setInterval(tick,1000);
+}
+function pause(){ playing=false; fade(toneGain.gain, 0.0, 300); if(timer){clearInterval(timer); timer=null;} }
+function reset(){ pause(); secs=0; timerEl.textContent='00:00'; ring.classList.remove('big'); }
+
+document.getElementById('startBtn').onclick = start;
+document.getElementById('pauseBtn').onclick = pause;
+document.getElementById('resetBtn').onclick = reset;
+document.getElementById('hz').addEventListener('change', e=> setFreq(e.target.value));
+document.getElementById('pink').addEventListener('change', e=>{ ensureAC(); fade(noiseGain.gain, e.target.checked?0.08:0.0, 500); });
+document.getElementById('envRain').addEventListener('change', e=> envOn('rain', e.target.checked));
+document.getElementById('envForest').addEventListener('change', e=> envOn('forest', e.target.checked));
+document.getElementById('envOcean').addEventListener('change', e=> envOn('ocean', e.target.checked));
+
+// 语言按钮文案
+window.addEventListener('du:lang', ()=>{ document.getElementById('langBtn').textContent = (DUi18n.get()==='zh'?'🌐 英文':'🌐 Chinese'); });
+;(function(w,d){
+  // 改这里即可全站切换支付链接
+  const CONF = {
+    monthly: 'https://dodva-noise-gumx.vercel.app/api/checkout?plan=monthly',
+    yearly:  'https://dodva-noise-gumx.vercel.app/api/checkout?plan=yearly',
+    backTo:  'index.html#subscribe' // 支持从子页跳回首页订阅区
+  };
+
+  let inited=false, host=null;
+  function init(){
+    if(inited) return; inited=true;
+    host = d.createElement('div'); host.style.cssText='position:fixed;inset:0;display:none;z-index:99999;background:rgba(0,0,0,.65);backdrop-filter:blur(6px)';
+    host.innerHTML = `
+      <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(92vw,540px);background:#0b0f1a;border:1px solid #2a2f48;border-radius:16px;padding:18px;box-shadow:0 22px 60px rgba(0,0,0,.55)">
+        <h3 style="margin:0 0 8px">💎 Dodva Pro</h3>
+        <p style="margin:0 0 12px;color:#b8bed1;font-size:14px">AI 陪伴 · 白噪音引擎 · 冥想频道 · 玩具柜扩展</p >
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <a class="du-btn" href=" " style="flex:1;min-width:180px;text-align:center;border:1px solid #3b3f59;border-radius:10px;padding:10px 12px;background:#12121b;color:#eaf2ff;text-decoration:none">💠 $9.9 / 月</a >
+          <a class="du-btn" href="${CONF.yearly}"  style="flex:1;min-width:180px;text-align:center;border:1px solid #94a3b8;border-radius:10px;padding:10px 12px;background:#e2e8f0;color:#0b1220;text-decoration:none;font-weight:700">🌌 $79 / 年</a >
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+          <a href="${CONF.backTo}" style="color:#93c5fd;text-decoration:none">⇠ 回到订阅说明</a >
+          <button id="duPayClose" style="border:1px solid #3b3f59;border-radius:10px;background:transparent;color:#eaf2ff;padding:6px 10px;cursor:pointer">关闭</button>
+        </div>
+      </div>`;
+    d.body.appendChild(host);
+    host.addEventListener('click', e=>{ if(e.target===host) close(); });
+    d.getElementById('duPayClose').addEventListener('click', close);
+  }
+  function open(plan){
+    init();
+    if(typeof plan==='string' && CONF[plan]){
+      location.href = CONF[plan]; return;
+    }
+    host.style.display='block';
+  }
+  function close(){ host.style.display='none'; }
+  function set(k,v){ CONF[k]=v; }
+  w.duPay = { open, modal: open, close, set, conf: CONF };
+})(window, document);
+
+</script>
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Dodva · 冥想 Meditation（粉噪 + 528/963Hz）</title>
+<meta name="theme-color" content="#0b0f1a">
+<style>
+  :root{
+    --bg:#0b0f1a; --fg:#eaf2ff; --muted:#a3b4d8; --line:rgba(147,197,253,.18);
+    --pill:linear-gradient(135deg,#a5b4fc,#67e8f9,#f0abfc); --grad:linear-gradient(135deg,#f0abfc,#fb7185,#60a5fa);
+    --glow:rgba(236,72,153,.22);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans SC",sans-serif; overflow-x:hidden}
+
+  /* 玻璃导航 */
+  header{position:sticky;top:0;display:flex;gap:10px;align-items:center;
+    padding:10px 16px;background:linear-gradient(180deg,rgba(10,16,34,.55),rgba(10,16,34,.35));
+    border-bottom:1px solid var(--line);backdrop-filter:blur(10px); z-index:30}
+  header a{color:#cde3ff;text-decoration:none;border:1px solid var(--line);
+    padding:8px 12px;border-radius:999px}
+
+  /* 背景动画（柔和星云 + 星点） */
+  .bg{
+    position:fixed; inset:0; z-index:-2;
+    background:
+      radial-gradient(1200px 700px at 80% -10%, rgba(236,72,153,.10), transparent 60%),
+      radial-gradient(1000px 600px at 15% 110%, rgba(99,102,241,.10), transparent 60%),
+      #0b0f1a;
+    animation:bgshift 18s ease-in-out infinite alternate;
+  }
+  @keyframes bgshift{
+    from{ filter:hue-rotate(0deg) brightness(1); }
+    to  { filter:hue-rotate(12deg) brightness(1.05); }
+  }
+  .stars{
+    position:fixed; inset:0; z-index:-1; pointer-events:none;
+    background-image:
+      radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,.35), transparent 60%),
+      radial-gradient(1.5px 1.5px at 60% 70%, rgba(255,255,255,.25), transparent 60%),
+      radial-gradient(1.8px 1.8px at 80% 40%, rgba(255,255,255,.28), transparent 60%),
+      radial-gradient(1.2px 1.2px at 35% 80%, rgba(255,255,255,.22), transparent 60%);
+    animation: twinkle 6s ease-in-out infinite alternate;
+    filter: blur(.2px);
+  }
+  @keyframes twinkle{
+    from{ opacity:.6; transform:translateY(0) }
+    to  { opacity:.9; transform:translateY(-3px) }
+  }
+
+  /* 顶部暖心条（MomoLines 挂载点） */
+  #momo-line{
+    position: sticky; top: 0; z-index: 25;
+    margin: 0; padding: 10px 14px;
+    background: linear-gradient(180deg, rgba(10,16,34,.65), rgba(10,16,34,.35));
+    border-bottom: 1px solid rgba(147,197,253,.18);
+    color: #eaf2ff; font-size: 15px;
+  }
+
+  .wrap{max-width:980px;margin:14px auto 80px;padding:0 16px}
+
+  h1{margin:.2em 0 .3em}
+  p.sub{opacity:.9;color:#d9e6ff;margin:.2em 0 1.0em}
+
+  /* 卡片/面板 */
+  .panel{border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0;
+    background:linear-gradient(180deg,rgba(10,16,34,.55),rgba(10,16,34,.35));
+    box-shadow:0 10px 28px rgba(7,11,22,.35)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .btn{background:rgba(147,197,253,.08);border:1px solid var(--line);color:var(--fg);
+    padding:10px 14px;border-radius:12px;cursor:pointer}
+  .pill{background:var(--pill);color:#051019;font-weight:800;border:none;cursor:pointer;border-radius:12px;padding:10px 14px}
+  .small{font-size:12px;color:var(--muted)}
+  .hint{font-size:13px;color:var(--muted)}
+
+  /* breathe guide */
+  .breathe{
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap
+  }
+  .orb{
+    width:110px;height:110px;border-radius:999px;
+    background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.35),rgba(236,72,153,.12));
+    border:1px solid rgba(236,72,153,.28); box-shadow:0 0 24px var(--glow), inset 0 0 16px rgba(236,72,153,.16);
+    transition:transform 2s ease, box-shadow 2s ease;
+  }
+  .orb.expand{ transform:scale(1.12); box-shadow:0 0 36px var(--glow), inset 0 0 22px rgba(236,72,153,.20); }
+  .step{min-width:110px}
+  .kbd{padding:2px 6px;border:1px solid var(--line);border-radius:6px;background:rgba(147,197,253,.08)}
+
+  /* 付费频率区（Pro 才解锁） */
+  .freq-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+  .card{border:1px solid var(--line);border-radius:12px;padding:12px;background:rgba(147,197,253,.04)}
+  .card h4{margin:.2em 0 .4em}
+  .toggle{display:flex;gap:10px;align-items:center;margin-top:8px}
+
+  /* 解锁门 */
+  [data-gated]{display:none;}
+  .visible{display:block !important;}
+
+  /* 语音状态 */
+  .mic{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--line)}
+  .dot{width:8px;height:8px;border-radius:999px;background:#64748b}
+  .dot.on{background:#22d3ee; box-shadow:0 0 8px #22d3ee}
+</style>
+</head>
+<body>
+
+<div class="bg"></div>
+<div class="stars"></div>
+
+<!-- 顶部暖心句（MomoLines） -->
+<div id="momo-line">加载中…</div>
+
+<div class="wrap">
+  <h1>🧘 冥想 · 粉噪 + 频率共振</h1>
+  <p class="sub">核心为粉噪（粉红噪音，柔和包裹感）。可叠加 528Hz（修复）/ 963Hz（松果体）频率与呼吸引导。首次需点击按钮授权音频播放。</p>
+
+  <!-- 订阅 CTA（未解锁时显示） -->
+  <section id="dv-cta" class="panel">
+    <h3>解锁 Dodva Noise · Pro</h3>
+    <p class="hint">Pro 解锁后可使用 <b>528Hz</b> / <b>963Hz</b> 频率、自动定时淡出、语音指令等功能。</p>
+    <div class="row">
+      <a class="pill" href="https://dodva-noise-gumx.vercel.app/api/checkout?plan=monthly">💎 $9.9 / 月</a>
+      <a class="btn"  href="https://dodva-noise-gumx.vercel.app/api/checkout?plan=yearly">🌌 $79 / 年</a>
+      <span class="small">调试：在地址栏加 <code>?unlock=1</code> 可本地解锁测试</span>
+    </div>
+  </section>
+
+  <!-- 主控（所有人可用） -->
+  <section class="panel">
+    <h3>🎛️ 粉噪主控</h3>
+    <div class="row">
+      <button id="play" class="pill">▶️ 播放</button>
+      <button id="pause" class="btn">⏸ 暂停</button>
+      <label>音量
+        <input id="vol" type="range" min="0" max="1" step="0.01" value="0.55"/>
+      </label>
+      <label>定时淡出
+        <select id="timer">
+          <option value="0">关闭</option>
+          <option value="15">15 分钟</option>
+          <option value="30" selected>30 分钟</option>
+          <option value="60">60 分钟</option>
+        </select>
+      </label>
+      <button id="startTimer" class="btn">⏳ 开始定时</button>
+      <span id="left" class="hint"></span>
+      <span class="mic" id="mic"><span class="dot" id="dot"></span>语音</span>
+    </div>
+    <div id="desc" class="hint" style="margin-top:6px">当前：粉噪 · 柔和包裹感，建议音量 50～60%。</div>
+  </section>
+
+  <!-- 频率区（Pro 解锁） -->
+  <section id="freq-zone" class="panel" data-gated>
+    <h3>💫 频率共振（Pro）</h3>
+    <div class="freq-grid">
+      <div class="card">
+        <h4>528Hz · DNA 修复</h4>
+        <p class="hint">温暖、安心，助放松与自我修复。</p>
+        <div class="toggle">
+          <button id="hz528" class="btn">启用 528Hz</button>
+          <label>电平 <input id="gain528" type="range" min="0" max="1" step="0.01" value="0.22"></label>
+        </div>
+      </div>
+      <div class="card">
+        <h4>963Hz · 松果体</h4>
+        <p class="hint">清亮、通透，助冥想与内在视觉。</p>
+        <div class="toggle">
+          <button id="hz963" class="btn">启用 963Hz</button>
+          <label>电平 <input id="gain963" type="range" min="0" max="1" step="0.01" value="0.18"></label>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 呼吸引导（所有人可用） -->
+  <section class="panel">
+    <h3>🫁 呼吸引导</h3>
+    <div class="breathe">
+      <div class="orb" id="orb" aria-hidden="true"></div>
+      <div class="step">
+        <div id="guide" style="font-weight:700">吸气 4 拍</div>
+        <div class="small">节奏：4-1-6-1（吸-停-呼-停）</div>
+      </div>
+      <div class="row">
+        <button id="breathStart" class="btn">开始引导</button>
+        <button id="breathStop" class="btn">停止引导</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- 依赖：MomoLines（绝对路径，站点根） -->
+<script src="/assets/js/momo-lines.js"></script>
+<script>
+  // 顶部暖心句（含冥想提示）
+  try{
+    MomoLines.mount({
+      mount:'#momo-line', interval:6500, random:true,
+      lines:[
+        { text:'让粉色的光像云一样，轻轻把你包住。' },
+        { text:'吸四停一、呼六停一。胸口会慢慢变暖。' },
+        { text:'听到 963Hz 时，注意力放在眉心之间。' },
+        { text:'如果情绪上来，不要抗拒，让它像雾一样穿过你。' },
+        { text:'你被爱着。你就是爱本身。' }
+      ]
+    });
+  }catch(e){ document.getElementById('momo-line').textContent='愿平静与爱与你同在。'; }
+</script>
+
+<!-- ===== 解锁逻辑（本地测试 ?unlock=1；正式依赖成功页追加 ?unlocked=1） ===== -->
+<script>
+(function gate(){
+  const url = new URL(location.href);
+  if (url.searchParams.get('unlock') === '1') {
+    localStorage.setItem('dodvaPro','true');
+    url.searchParams.delete('unlock');
+    history.replaceState(null,'',url.toString());
+  }
+  if (url.searchParams.get('unlocked') === '1') {
+    localStorage.setItem('dodvaPro','true');
+  }
+  const isPro = localStorage.getItem('dodvaPro') === 'true';
+  const gated = document.querySelectorAll('[data-gated]');
+  const cta = document.getElementById('dv-cta');
+  if (isPro){ gated.forEach(el=>el.classList.add('visible')); cta.style.display='none'; }
+  else      { gated.forEach(el=>el.classList.remove('visible')); cta.style.display='block'; }
+})();
+</script>
+
+<!-- ===== Web Audio：粉噪 + 频率 + 定时淡出 ===== -->
+<script>
+(()=>{
+  let ctx, master, pinkNode, pinkFilterChain=[];
+  let osc528=null, gain528=null, osc963=null, gain963=null;
+  let fadeTimer=null, tickTimer=null, endAt=0;
+
+  const $ = s=>document.querySelector(s);
+  const playBtn=$('#play'), pauseBtn=$('#pause'), volEl=$('#vol');
+  const timerSel=$('#timer'), startTimerBtn=$('#startTimer'), leftEl=$('#left');
+  const desc=$('#desc');
+
+  async function ensureCtx(){
+    if (ctx) return;
+    ctx = new (window.AudioContext||window.webkitAudioContext)();
+    master = ctx.createGain();
+    master.gain.value = parseFloat(volEl.value||'0.55');
+    master.connect(ctx.destination);
+    buildPink();
+    buildFreqNodes(); // 预建（默认静音）
+  }
+
+  // Pink noise: 白噪通过多段低通/搁架塑形 ≈ 粉噪近似
+  function buildPink(){
+    stopPink();
+    const src = ctx.createBufferSource();
+    const len = 2*ctx.sampleRate;
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for(let i=0;i<len;i++){ data[i] = Math.random()*2 - 1; }
+    src.buffer = buf; src.loop = true;
+
+    const lp1 = ctx.createBiquadFilter(); lp1.type='lowpass';  lp1.frequency.value=1800; lp1.Q.value=.7;
+    const peq = ctx.createBiquadFilter(); peq.type='peaking';  peq.frequency.value=300;  peq.Q.value=.9; peq.gain.value=3;
+    const hs  = ctx.createBiquadFilter(); hs.type='highshelf'; hs.frequency.value=3000; hs.gain.value=-4;
+
+    src.connect(lp1); lp1.connect(peq); peq.connect(hs); hs.connect(master);
+    pinkNode = src; pinkFilterChain = [lp1, peq, hs];
+  }
+
+  function startPink(){ try{ pinkNode && pinkNode.start(0); }catch{} }
+  function stopPink(){ try{ pinkNode && pinkNode.stop(); }catch{} pinkNode=null; }
+
+  // 频率振荡器（正弦），默认不连接 master
+  function buildFreqNodes(){
+    // 528
+    gain528 = ctx.createGain(); gain528.gain.value = 0.0;
+    osc528 = ctx.createOscillator(); osc528.type='sine'; osc528.frequency.value=528;
+    osc528.connect(gain528).connect(master); osc528.start();
+
+    // 963
+    gain963 = ctx.createGain(); gain963.gain.value = 0.0;
+    osc963 = ctx.createOscillator(); osc963.type='sine'; osc963.frequency.value=963;
+    osc963.connect(gain963).connect(master); osc963.start();
+  }
+
+  // 播放/暂停/音量
+  playBtn.addEventListener('click', async ()=>{
+    await ensureCtx();
+    if (ctx.state==='suspended') await ctx.resume();
+    buildPink(); startPink();
+  });
+  pauseBtn.addEventListener('click', ()=>{ stopPink(); });
+  volEl.addEventListener('input', ()=>{
+    if (!master||!ctx) return;
+    master.gain.setTargetAtTime(parseFloat(volEl.value||'0.55'), ctx.currentTime, 0.01);
+  });
+
+  // 定时淡出
+  startTimerBtn.addEventListener('click', ()=>{
+    if (!ctx||!master) return;
+    clearTimeout(fadeTimer); clearInterval(tickTimer);
+    const mins = parseInt(timerSel.value,10);
+    if (!mins){ leftEl.textContent=''; return; }
+    const now = Date.now(); endAt = now + mins*60*1000;
+    leftEl.textContent = `定时中：${mins}:00`;
+    tickTimer = setInterval(()=>{
+      const left = Math.max(0, endAt - Date.now());
+      const m = Math.floor(left/60000), s = Math.floor((left%60000)/1000);
+      leftEl.textContent = `定时中：${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      if (left<=0) clearInterval(tickTimer);
+    }, 500);
+
+    const fadeMs = 16000;
+    fadeTimer = setTimeout(()=>{
+      const t0 = ctx.currentTime, t1 = t0 + fadeMs/1000;
+      master.gain.cancelScheduledValues(t0);
+      master.gain.setValueAtTime(master.gain.value, t0);
+      master.gain.linearRampToValueAtTime(0.0001, t1);
+      setTimeout(()=>{ stopPink(); master.gain.value=parseFloat(volEl.value||'0.55'); leftEl.textContent='已淡出结束'; }, fadeMs+250);
+    }, Math.max(0, mins*60*1000 - fadeMs));
+  });
+
+  // 频率控制（Pro）
+  const isPro = localStorage.getItem('dodvaPro')==='true';
+  const hz528Btn = document.getElementById('hz528');
+  const hz963Btn = document.getElementById('hz963');
+  const gain528El = document.getElementById('gain528');
+  const gain963El = document.getElementById('gain963');
+
+  function toggleSine(which){
+    if (!ctx) return;
+    if (which===528){
+      const on = (gain528.gain.value > 0.0001);
+      const target = on ? 0.0 : parseFloat(gain528El.value||'0.22');
+      gain528.gain.setTargetAtTime(target, ctx.currentTime, 0.03);
+      hz528Btn.textContent = target>0? '关闭 528Hz' : '启用 528Hz';
+    } else {
+      const on = (gain963.gain.value > 0.0001);
+      const target = on ? 0.0 : parseFloat(gain963El.value||'0.18');
+      gain963.gain.setTargetAtTime(target, ctx.currentTime, 0.03);
+      hz963Btn.textContent = target>0? '关闭 963Hz' : '启用 963Hz';
+    }
+  }
+
+  if (hz528Btn && isPro){
+    hz528Btn.addEventListener('click', async ()=>{ await ensureCtx(); toggleSine(528); });
+    gain528El.addEventListener('input', ()=>{ if(ctx&&gain528) gain528.gain.setTargetAtTime(parseFloat(gain528El.value||'0.22'), ctx.currentTime, 0.02); });
+  }
+  if (hz963Btn && isPro){
+    hz963Btn.addEventListener('click', async ()=>{ await ensureCtx(); toggleSine(963); });
+    gain963El.addEventListener('input', ()=>{ if(ctx&&gain963) gain963.gain.setTargetAtTime(parseFloat(gain963El.value||'0.18'), ctx.currentTime, 0.02); });
+  }
+
+  if (!isPro){
+    // 未解锁时禁用按钮
+    hz528Btn && (hz528Btn.disabled = true);
+    hz963Btn && (hz963Btn.disabled = true);
+  }
+
+  // 呼吸引导
+  const orb = document.getElementById('orb');
+  const guide = document.getElementById('guide');
+  let breatheTimer=null, phase=0;
+  function setGuide(txt, expand){ guide.textContent=txt; orb.classList.toggle('expand', !!expand); }
+  function tickBreathe(){
+    phase = (phase+1)%12; // 12 个半拍：吸4、停1、呼6、停1（我们按 12*0.5s = 6s 一个循环，可调）
+    // 用较慢的节奏：每步 1 秒，更稳
+  }
+  function startBreathe(){
+    stopBreathe(); phase=0;
+    setGuide('吸气 4 拍', true);
+    let step=0;
+    breatheTimer = setInterval(()=>{
+      step=(step+1)%12;
+      if (step===0){ setGuide('吸气 4 拍', true); }
+      if (step===4){ setGuide('停 1 拍', true); }
+      if (step===5){ setGuide('呼气 6 拍', false); }
+      if (step===11){ setGuide('停 1 拍', false); }
+    }, 1000);
+  }
+  function stopBreathe(){ clearInterval(breatheTimer); breatheTimer=null; setGuide('吸气 4 拍', true); }
+
+  document.getElementById('breathStart').addEventListener('click', startBreathe);
+  document.getElementById('breathStop').addEventListener('click', stopBreathe);
+
+  // 初始描述
+  desc.textContent = '当前：粉噪 · 柔和包裹感，建议音量 50～60%。';
+})();
+</script>
+
+<!-- ===== 语音指令（可选，Chrome/Safari 支持） ===== -->
+<script>
+(()=>{
+  const mic=document.getElementById('mic'), dot=document.getElementById('dot');
+  if (!('webkitSpeechRecognition' in window)) return; // 简易兼容处理
+  const R = new webkitSpeechRecognition();
+  R.lang='zh-CN'; R.continuous=true; R.interimResults=false;
+
+  mic.addEventListener('click', ()=>{
+    if (dot.classList.contains('on')){ R.stop(); dot.classList.remove('on'); }
+    else{ R.start(); dot.classList.add('on'); }
+  });
+
+  function fire(id){ document.getElementById(id)?.click(); }
+  function setGain(id, v){ const el=document.getElementById(id); if(!el) return; el.value=String(v); el.dispatchEvent(new Event('input')); }
+
+  R.onresult = (e)=>{
+    const text = Array.from(e.results).slice(-1)[0][0].transcript.trim();
+    // 控制粉噪
+    if (/播放|开始/.test(text)) fire('play');
+    if (/暂停|停止/.test(text)) fire('pause');
+    if (/(大|加).*音量|音量大/.test(text)) {
+      const v=Math.min(1, (parseFloat(document.getElementById('vol').value)||.55)+.1); setGain('vol', v);
+    }
+    if (/(小|减).*音量|音量小/.test(text)) {
+      const v=Math.max(0, (parseFloat(document.getElementById('vol').value)||.55)-.1); setGain('vol', v);
+    }
+    // 频率（需 Pro 解锁后才有效）
+    if (/五二八|五百二十八|五二八赫兹|修复/.test(text)) document.getElementById('hz528')?.click();
+    if (/九六三|九百六十三|九六三赫兹|松果体/.test(text)) document.getElementById('hz963')?.click();
+
+    // 呼吸引导
+    if (/开始呼吸|呼吸引导/.test(text)) document.getElementById('breathStart')?.click();
+    if (/停止呼吸/.test(text)) document.getElementById('breathStop')?.click();
+  };
+})();
+</script>
+
+<noscript>
+  <div class="wrap"><section class="panel"><b>需要启用 JavaScript</b> 才能使用冥想功能。</section></div>
+</noscript>
+
+</body>
+</html>
+
+</body>
+</html>

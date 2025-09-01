@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Dodva · 学习室</title>
+<style>
+  :root{--bg:#0b0f1a;--fg:#eaf2ff;--mut:#a3b4d8;--line:#2a2f48}
+  html,body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  header{position:sticky;top:0;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,rgba(14,14,22,.7),rgba(14,14,22,.45));backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .btn{border:1px solid #3b3f59;border-radius:10px;padding:7px 12px;background:#12121b;color:#eaf2ff;cursor:pointer}
+  .wrap{max-width:1000px;margin:0 auto;padding:16px}
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .card{border:1px solid var(--line);border-radius:16px;padding:16px;background:linear-gradient(180deg,rgba(14,14,22,.9),rgba(14,14,22,.6));box-shadow:0 10px 28px rgba(0,0,0,.45)}
+  .mut{color:var(--mut);font-size:13px}
+  /* 日历 */
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:10px}
+  .cell{border:1px solid #2a2f48;border-radius:10px;height:90px;padding:6px;display:flex;flex-direction:column;gap:4px}
+  .cell .d{font-size:12px;color:#a3b4d8}
+  .task{font-size:12px;background:#132033;color:#cfe3ff;border-radius:6px;padding:2px 6px}
+  .today{outline:2px solid #5eead4}
+  input,select{border:1px solid #3b3f59;border-radius:10px;background:#0f0f17;color:#eaf2ff;padding:7px 10px}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a class="btn" href=" ">🏠 Home</a >
+    <button class="btn" onclick="DUi18n.toggle()" id="langBtn">🌐 EN/中文</button>
+  </div>
+  <button class="btn" onclick="duPay.modal()">💎 订阅 Pro</button>
+</header>
+
+<div class="wrap">
+  <div class="grid">
+    <!-- 番茄钟 -->
+    <section class="card">
+      <h2 data-i18n="flow.pomo">番茄钟</h2>
+      <div class="mut" data-i18n="flow.pomoTip">默认 25 / 5，完成后自动进入休息</div>
+      <div style="font-size:40px;margin:8px 0" id="clock">25:00</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" id="start">▶️</button>
+        <button class="btn" id="pause">⏸</button>
+        <button class="btn" id="reset">⟲</button>
+        <label class="mut">F<input id="focus" type="number" value="25" min="5" max="90" style="width:70px;margin-left:6px"/></label>
+        <label class="mut">B<input id="break" type="number" value="5" min="3" max="30" style="width:70px;margin-left:6px"/></label>
+        <span class="mut" id="state">Focus</span>
+      </div>
+    </section>
+
+    <!-- Game Plan 日历 -->
+    <section class="card">
+      <h2 data-i18n="flow.plan">Game Plan 日历</h2>
+      <div class="mut" id="ym"></div>
+      <div class="cal" id="cal"></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
+        <input id="taskTxt" placeholder="今天要做什么…"/>
+        <input id="taskDate" type="date"/>
+        <button class="btn" id="addTask" data-i18n="flow.add">添加</button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script src="du-i18n.js"></script>
+<script src="du-pay.js"></script>
+<script>
+// ===== 番茄钟 =====
+let t=null, left=25*60, mode='focus';
+const $=s=>document.querySelector(s);
+function draw(){ const m=String((left/60|0)).padStart(2,'0'), s=String(left%60).padStart(2,'0'); $('#clock').textContent=`${m}:${s}`; $('#state').textContent = mode==='focus'?'Focus':'Break'; }
+function step(){ left--; if(left<=0){ if(mode==='focus'){ mode='break'; left=(+$('#break').value)*60; } else{ mode='focus'; left=(+$('#focus').value)*60; } draw(); } }
+$('#start').onclick=()=>{ if(t)return; t=setInterval(()=>{ step(); draw(); },1000); };
+$('#pause').onclick=()=>{ clearInterval(t); t=null; };
+$('#reset').onclick=()=>{ clearInterval(t); t=null; mode='focus'; left=(+$('#focus').value)*60; draw(); };
+$('#focus').onchange=$('#break').onchange=()=>{ if(mode==='focus'){ left=(+$('#focus').value)*60 } else { left=(+$('#break').value)*60 } ; draw(); };
+draw();
+
+// ===== 轻量日历（本地存储） =====
+const CAL = { y:new Date().getFullYear(), m:new Date().getMonth(), tasks: JSON.parse(localStorage.getItem('du_tasks')||'{}') };
+function keyOf(d){ return d.toISOString().slice(0,10); }
+function saveTasks(){ localStorage.setItem('du_tasks', JSON.stringify(CAL.tasks)); }
+function renderCal(){
+  const first=new Date(CAL.y, CAL.m,1), last=new Date(CAL.y, CAL.m+1,0);
+  $('#ym').textContent=`${CAL.y}-${String(CAL.m+1).padStart(2,'0')}`;
+  const box=$('#cal'); box.innerHTML='';
+  // 前导空白
+  for(let i=0;i<((first.getDay()+6)%7);i++){ box.appendChild(document.createElement('div')); }
+  for(let d=1; d<=last.getDate(); d++){
+    const cell=document.createElement('div'); cell.className='cell';
+    const dt=new Date(CAL.y, CAL.m, d); const k=keyOf(dt);
+    const label=document.createElement('div'); label.className='d'; label.textContent=d;
+    const list=document.createElement('div'); 
+    (CAL.tasks[k]||[]).forEach(t=>{ const chip=document.createElement('div'); chip.className='task'; chip.textContent=t; list.appendChild(chip); });
+    cell.append(label,list);
+    if(k===keyOf(new Date())) cell.classList.add('today');
+    cell.onclick=()=>{ $('#taskDate').value=k; $('#taskTxt').focus(); }
+    box.appendChild(cell);
+  }
+}
+$('#addTask').onclick=()=>{
+  const txt=$('#taskTxt').value.trim(); const day=$('#taskDate').value || keyOf(new Date());
+  if(!txt) return;
+  CAL.tasks[day] = CAL.tasks[day]||[]; CAL.tasks[day].push(txt); saveTasks(); $('#taskTxt').value=''; renderCal();
+};
+renderCal();
+ ;(function(w){
+  const KEY='du_lang';
+  let lang = localStorage.getItem(KEY) || (navigator.language||'').toLowerCase().startsWith('zh') ? 'zh' : 'en';
+
+  const dict = {
+    zh:{
+      "nav.home":"🏠 返回首页",
+      "cta.subscribe":"订阅 Pro",
+      "energy.title":"今日能量卡",
+      "energy.tip":"选择主题，翻一张属于你的宇宙签语。",
+      "energy.topic":"主题",
+      "topic.heal":"疗愈","topic.love":"关系","topic.wealth":"财富","topic.focus":"专注",
+      "energy.prev":"上一张","energy.next":"下一张","energy.shuffle":"随机",
+      "energy.copy":"复制文案","energy.share":"分享链接",
+      "energy.import":"批量导入词库（CSV，每行一句；可选 #tag）","energy.importBtn":"导入到当前主题",
+      "med.title":"粉晶冥想 · 呼吸引导","med.tip":"跟随光环：吸气4｜停4｜呼气6。选择频率与环境层，按「开始」。",
+      "med.start":"开始","med.pause":"暂停","med.reset":"重置",
+      "flow.pomo":"番茄钟","flow.pomoTip":"默认 25 / 5，完成后自动进入休息","flow.plan":"Game Plan 日历","flow.add":"添加"
+    },
+    en:{
+      "nav.home":"🏠 Home",
+      "cta.subscribe":"Subscribe Pro",
+      "energy.title":"Energy Card · Today",
+      "energy.tip":"Pick a theme and draw a line from the universe.",
+      "energy.topic":"Topic",
+      "topic.heal":"Healing","topic.love":"Relationship","topic.wealth":"Wealth","topic.focus":"Focus",
+      "energy.prev":"Prev","energy.next":"Next","energy.shuffle":"Shuffle",
+      "energy.copy":"Copy","energy.share":"Share Link",
+      "energy.import":"Bulk import CSV (one line per row; optional #tags)","energy.importBtn":"Import to current theme",
+      "med.title":"Rose Quartz Meditation · Guided Breathing","med.tip":"Follow the ring: inhale 4 | hold 4 | exhale 6. Pick frequency & ambience.",
+      "med.start":"Start","med.pause":"Pause","med.reset":"Reset",
+      "flow.pomo":"Pomodoro","flow.pomoTip":"25/5 by default; auto switch to break","flow.plan":"Game Plan Calendar","flow.add":"Add"
+    }
+  };
+
+  function t(key){ return (dict[lang] && dict[lang][key]) || key; }
+  function apply(root=document){
+    root.querySelectorAll('[data-i18n]').forEach(el=>{
+      const key = el.getAttribute('data-i18n'); const txt = t(key);
+      if(el.placeholder!==undefined && /placeholder/i.test(el.tagName)===false && el.hasAttribute('data-i18n-placeholder')){
+        el.placeholder = txt;
+      }
+      el.textContent = txt;
+    });
+  }
+  function set(l){ lang=l; localStorage.setItem(KEY,l); apply(); w.dispatchEvent(new CustomEvent('du:lang',{detail:l})); }
+  function toggle(){ set(lang==='zh'?'en':'zh'); }
+
+  w.DUi18n = { set, toggle, apply, get:()=>lang, dict };
+  document.addEventListener('DOMContentLoaded', ()=> apply());
+})(window);
+</script>
+</body>
+</html>
