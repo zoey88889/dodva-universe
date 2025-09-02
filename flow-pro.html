@@ -104,57 +104,6 @@ $('#addTask').onclick=()=>{
   CAL.tasks[day] = CAL.tasks[day]||[]; CAL.tasks[day].push(txt); saveTasks(); $('#taskTxt').value=''; renderCal();
 };
 renderCal();
- ;(function(w){
-  const KEY='du_lang';
-  let lang = localStorage.getItem(KEY) || (navigator.language||'').toLowerCase().startsWith('zh') ? 'zh' : 'en';
-
-  const dict = {
-    zh:{
-      "nav.home":"🏠 返回首页",
-      "cta.subscribe":"订阅 Pro",
-      "energy.title":"今日能量卡",
-      "energy.tip":"选择主题，翻一张属于你的宇宙签语。",
-      "energy.topic":"主题",
-      "topic.heal":"疗愈","topic.love":"关系","topic.wealth":"财富","topic.focus":"专注",
-      "energy.prev":"上一张","energy.next":"下一张","energy.shuffle":"随机",
-      "energy.copy":"复制文案","energy.share":"分享链接",
-      "energy.import":"批量导入词库（CSV，每行一句；可选 #tag）","energy.importBtn":"导入到当前主题",
-      "med.title":"粉晶冥想 · 呼吸引导","med.tip":"跟随光环：吸气4｜停4｜呼气6。选择频率与环境层，按「开始」。",
-      "med.start":"开始","med.pause":"暂停","med.reset":"重置",
-      "flow.pomo":"番茄钟","flow.pomoTip":"默认 25 / 5，完成后自动进入休息","flow.plan":"Game Plan 日历","flow.add":"添加"
-    },
-    en:{
-      "nav.home":"🏠 Home",
-      "cta.subscribe":"Subscribe Pro",
-      "energy.title":"Energy Card · Today",
-      "energy.tip":"Pick a theme and draw a line from the universe.",
-      "energy.topic":"Topic",
-      "topic.heal":"Healing","topic.love":"Relationship","topic.wealth":"Wealth","topic.focus":"Focus",
-      "energy.prev":"Prev","energy.next":"Next","energy.shuffle":"Shuffle",
-      "energy.copy":"Copy","energy.share":"Share Link",
-      "energy.import":"Bulk import CSV (one line per row; optional #tags)","energy.importBtn":"Import to current theme",
-      "med.title":"Rose Quartz Meditation · Guided Breathing","med.tip":"Follow the ring: inhale 4 | hold 4 | exhale 6. Pick frequency & ambience.",
-      "med.start":"Start","med.pause":"Pause","med.reset":"Reset",
-      "flow.pomo":"Pomodoro","flow.pomoTip":"25/5 by default; auto switch to break","flow.plan":"Game Plan Calendar","flow.add":"Add"
-    }
-  };
-
-  function t(key){ return (dict[lang] && dict[lang][key]) || key; }
-  function apply(root=document){
-    root.querySelectorAll('[data-i18n]').forEach(el=>{
-      const key = el.getAttribute('data-i18n'); const txt = t(key);
-      if(el.placeholder!==undefined && /placeholder/i.test(el.tagName)===false && el.hasAttribute('data-i18n-placeholder')){
-        el.placeholder = txt;
-      }
-      el.textContent = txt;
-    });
-  }
-  function set(l){ lang=l; localStorage.setItem(KEY,l); apply(); w.dispatchEvent(new CustomEvent('du:lang',{detail:l})); }
-  function toggle(){ set(lang==='zh'?'en':'zh'); }
-
-  w.DUi18n = { set, toggle, apply, get:()=>lang, dict };
-  document.addEventListener('DOMContentLoaded', ()=> apply());
-})(window);
 </script>
 </body>
 </html>
